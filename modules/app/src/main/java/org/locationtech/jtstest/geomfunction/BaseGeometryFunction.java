@@ -2,16 +2,17 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
  */
 package org.locationtech.jtstest.geomfunction;
 
-import java.lang.reflect.Method;
+
+import java.util.Arrays;
 
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jtstest.util.*;
@@ -50,6 +51,7 @@ implements GeometryFunction, Comparable
 	protected String[] parameterNames;
 	protected Class[] parameterTypes;
 	protected Class returnType;
+	protected boolean isRequiredB = true;
 	
 	public BaseGeometryFunction(
 			String category,
@@ -121,6 +123,10 @@ implements GeometryFunction, Comparable
     return parameterTypes.length > 0 && parameterTypes[0] == Geometry.class;
   }
 
+  public boolean isRequiredB() {
+    return isRequiredB;
+  }
+  
 	public String getSignature()
 	{
 		StringBuffer paramTypes = new StringBuffer();
@@ -173,6 +179,20 @@ implements GeometryFunction, Comparable
 		return true;
 	}
 
+	 /* (non-Javadoc)
+   * @see java.lang.Object#hashCode()
+   */
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((name == null) ? 0 : name.hashCode());
+    result = prime * result + Arrays.hashCode(parameterNames);
+    result = prime * result + Arrays.hashCode(parameterTypes);
+    result = prime * result + ((returnType == null) ? 0 : returnType.hashCode());
+    return result;
+  }
+  
 	public int compareTo(Object o)
 	{
 		GeometryFunction func = (GeometryFunction) o;

@@ -1,13 +1,10 @@
-
-
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -51,6 +48,8 @@ public class NodeMap
   */
   /**
    * This method expects that a node has a coordinate value.
+   * @param coord Coordinate
+   * @return node for the provided coord
    */
   public Node addNode(Coordinate coord)
   {
@@ -77,6 +76,8 @@ public class NodeMap
    * Adds a node for the start point of this EdgeEnd
    * (if one does not already exist in this map).
    * Adds the EdgeEnd to the (possibly new) node.
+   *
+   * @param e EdgeEnd
    */
   public void add(EdgeEnd e)
   {
@@ -85,6 +86,9 @@ public class NodeMap
     n.add(e);
   }
   /**
+   * Find coordinate.
+   *
+   * @param coord Coordinate to find
    * @return the node if found; null otherwise
    */
   public Node find(Coordinate coord)  {    return (Node) nodeMap.get(coord);  }

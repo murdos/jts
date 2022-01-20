@@ -1,12 +1,10 @@
-
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -56,7 +54,7 @@ import org.locationtech.jts.geomgraph.index.SegmentIntersector;
  * for (invalid) self-intersections in <tt>Polygon</tt>s.  
  * In order to check if a <tt>Polygonal</tt> geometry has self-intersections,
  * use {@link Geometry#isValid()}).
- * <li><b>Linear</b> geometries are simple iff they do <i>not</i> self-intersect at interior points
+ * <li><b>Linear</b> geometries are simple if they do <i>not</i> self-intersect at interior points
  * (i.e. points other than boundary points).
  * This is equivalent to saying that no two linear components satisfy the SFS {@link Geometry#touches(Geometry)}
  * predicate. 
@@ -79,6 +77,8 @@ import org.locationtech.jts.geomgraph.index.SegmentIntersector;
  * @see BoundaryNodeRule
  *
  * @version 1.7
+ * 
+ * @deprecated Replaced by org.locationtech.jts.operation.valid.IsSimpleOp
  */
 public class IsSimpleOp
 {
@@ -178,7 +178,7 @@ public class IsSimpleOp
   }
 
   /**
-   * A MultiPoint is simple iff it has no repeated points
+   * A MultiPoint is simple if it has no repeated points
    * @deprecated use isSimple()
    */
   public boolean isSimple(MultiPoint mp)
@@ -223,7 +223,7 @@ public class IsSimpleOp
   
   /**
    * Semantics for GeometryCollection is 
-   * simple iff all components are simple.
+   * simple if all components are simple.
    * 
    * @param geom
    * @return true if the geometry is simple

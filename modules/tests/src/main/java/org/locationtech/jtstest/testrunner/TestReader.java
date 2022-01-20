@@ -1,12 +1,10 @@
-
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -48,29 +46,29 @@ public class TestReader
     {
     }
 
-    public GeometryOperation getGeometryOperation()
+    private GeometryOperation getGeometryOperation()
     {
     	// use the main one if it was user-specified or this run does not have an op specified
-    	if (TopologyTestApp.isGeometryOperationSpecified()
+    	if (JTSTestRunnerCmd.isGeometryOperationSpecified()
     			|| geomOp == null)
-    		return TopologyTestApp.getGeometryOperation();
+    		return JTSTestRunnerCmd.getGeometryOperation();
     	
     	return geomOp;
     }
 
-    public boolean isBooleanFunction(String name) {
+    private boolean isBooleanFunction(String name) {
         return getGeometryOperation().getReturnType(name) == boolean.class;
     }
 
-    public boolean isIntegerFunction(String name) {
+    private boolean isIntegerFunction(String name) {
         return getGeometryOperation().getReturnType(name) == int.class;
     }
 
-    public boolean isDoubleFunction(String name) {
+    private boolean isDoubleFunction(String name) {
         return getGeometryOperation().getReturnType(name) == double.class;
     }
 
-    public boolean isGeometryFunction(String name) 
+    private boolean isGeometryFunction(String name) 
     {
     	Class returnType = getGeometryOperation().getReturnType(name);
     	if (returnType == null)
@@ -189,6 +187,10 @@ public class TestReader
 
     private Result toResult(String value, String name, TestRun testRun)
         throws TestParseException, ParseException {
+        // no expected result provided
+        if (value.length() == 0) {
+          return null; 
+        }
         if (isBooleanFunction(name)) {
             return toBooleanResult(value);
         }
@@ -201,9 +203,8 @@ public class TestReader
         if (isGeometryFunction(name)) {
             return toGeometryResult(value, testRun);
         }
-        throw new TestParseException(
-            "Unknown operation name '" + name + "'");
-//        return null;
+        return null;
+        //throw new TestParseException("Unknown operation name '" + name + "'");
     }
 
     private BooleanResult toBooleanResult(String value) throws TestParseException {
@@ -584,11 +585,12 @@ public class TestReader
     public static List getContents(String textFileName) throws FileNotFoundException, IOException {
         List contents = new Vector();
         FileReader fileReader = new FileReader(textFileName);
-        BufferedReader bufferedReader = new BufferedReader(fileReader);
-        String line = bufferedReader.readLine();
-        while (line != null) {
-            contents.add(line);
-            line = bufferedReader.readLine();
+        try(BufferedReader bufferedReader = new BufferedReader(fileReader)){
+            String line = bufferedReader.readLine();
+            while (line != null) {
+                contents.add(line);
+                line = bufferedReader.readLine();
+            }
         }
         return contents;
     }

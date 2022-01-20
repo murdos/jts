@@ -2,9 +2,9 @@
  * Copyright (c) 2018 Vivid Solutions
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -62,7 +62,8 @@ public class Coordinate implements Comparable<Coordinate>, Cloneable, Serializab
    * Standard ordinate index value for, where Z is 2.
    *
    * <p>This constant assumes XYZM coordinate sequence definition, please check this assumption
-   * using {@link #getDimension()} and {@link #getMeasures()} before use.
+   * using {@link CoordinateSequence#getDimension()} and {@link CoordinateSequence#getMeasures()}
+   * before use.
    */
   public static final int Z = 2;
 
@@ -70,7 +71,8 @@ public class Coordinate implements Comparable<Coordinate>, Cloneable, Serializab
    * Standard ordinate index value for, where M is 3.
    *
    * <p>This constant assumes XYZM coordinate sequence definition, please check this assumption
-   * using {@link #getDimension()} and {@link #getMeasures()} before use.
+   * using {@link CoordinateSequence#getDimension()} and {@link CoordinateSequence#getMeasures()}
+   * before use.
    */
   public static final int M = 3;
   
@@ -220,7 +222,7 @@ public class Coordinate implements Comparable<Coordinate>, Cloneable, Serializab
    * Gets the ordinate value for the given index.
    * 
    * The base implementation supports values for the index are 
-   * {@link X}, {@link Y}, and {@link Z}.
+   * {@link #X}, {@link #Y}, and {@link #Z}.
    * 
    * @param ordinateIndex the ordinate index
    * @return the value of the ordinate
@@ -241,7 +243,7 @@ public class Coordinate implements Comparable<Coordinate>, Cloneable, Serializab
    * to a given value.
    * 
    * The base implementation supported values for the index are 
-   * {@link X}, {@link Y}, and {@link Z}.
+   * {@link #X}, {@link #Y}, and {@link #Z}.
    * 
    * @param ordinateIndex the ordinate index
    * @param value the value to set
@@ -264,6 +266,19 @@ public class Coordinate implements Comparable<Coordinate>, Cloneable, Serializab
     }
   }
 
+  /**
+   * Tests if the coordinate has valid X and Y ordinate values.
+   * An ordinate value is valid iff it is finite.
+   * 
+   * @return true if the coordinate is valid
+   * @see Double#isFinite(double)
+   */
+  public boolean isValid() {
+    if (! Double.isFinite(x)) return false;
+    if (! Double.isFinite(y)) return false;
+    return true;
+  }
+  
   /**
    *  Returns whether the planar projections of the two <code>Coordinate</code>s
    *  are equal.
@@ -400,6 +415,15 @@ public class Coordinate implements Comparable<Coordinate>, Cloneable, Serializab
   public Coordinate copy() {
     return new Coordinate(this);
   }
+  
+  /**
+   * Create a new Coordinate of the same type as this Coordinate, but with no values.
+   * 
+   * @return a new Coordinate
+   */
+  public Coordinate create() {
+      return new Coordinate();
+  }
 
   /**
    * Computes the 2-dimensional Euclidean distance to another location.
@@ -509,8 +533,8 @@ public class Coordinate implements Comparable<Coordinate>, Cloneable, Serializab
      * Compares two {@link Coordinate}s along to the number of
      * dimensions specified.
      *
-     * @param o1 a {@link Coordinate}
-     * @param o2 a {link Coordinate}
+     * @param c1 a {@link Coordinate}
+     * @param c2 a {link Coordinate}
      * @return -1, 0, or 1 depending on whether o1 is less than,
      * equal to, or greater than 02
      *

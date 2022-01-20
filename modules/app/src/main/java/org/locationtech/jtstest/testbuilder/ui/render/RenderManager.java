@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -102,7 +102,7 @@ public class RenderManager
 		int height = image.getHeight(null);
 		
 		Graphics2D g = (Graphics2D) image.getGraphics();
-		g.setColor( GeometryEditPanel.VIEW_backgroundColor );
+		g.setColor( panel.getBackgroundColor() );
 
 		Rectangle2D.Double r = new Rectangle2D.Double(0, 0, width, height);
 		g.fill(r);
@@ -141,7 +141,7 @@ class RendererSwingWorker extends SwingWorker
 		Graphics2D gr = (Graphics2D) image.getGraphics();
     renderer.render(gr);
   	isRendering = false;
-    return new Boolean(true);
+    return Boolean.TRUE;
   }
   
   public boolean isRendering()

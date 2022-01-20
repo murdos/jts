@@ -1,13 +1,10 @@
-
-
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -19,6 +16,7 @@ import java.io.PrintStream;
 import org.locationtech.jts.algorithm.BoundaryNodeRule;
 import org.locationtech.jts.algorithm.Orientation;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Quadrant;
 import org.locationtech.jts.util.Assert;
 
 /**
@@ -93,6 +91,9 @@ public class EdgeEnd
    * are different, it it trivial to determine which vector is "greater".
    * - if the vectors lie in the same quadrant, the computeOrientation function
    * can be used to decide the relative orientation of the vectors.
+   *
+   * @param e EdgeEnd
+   * @return direction comparison
    */
   public int compareDirection(EdgeEnd e)
   {

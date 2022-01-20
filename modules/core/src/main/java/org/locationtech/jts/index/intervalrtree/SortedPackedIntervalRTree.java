@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -15,9 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.index.ItemVisitor;
-import org.locationtech.jts.io.WKTWriter;
 
 
 /**
@@ -37,9 +35,16 @@ import org.locationtech.jts.io.WKTWriter;
  */
 public class SortedPackedIntervalRTree 
 {
-  private List leaves = new ArrayList();
-	private IntervalRTreeNode root = null;
-	
+  private final List leaves = new ArrayList();
+  
+  /**
+   * If root is null that indicates
+   * that the tree has not yet been built,   
+   * OR nothing has been added to the tree.
+   * In both cases, the tree is still open for insertions.
+   */
+	private volatile IntervalRTreeNode root = null;
+
 	public SortedPackedIntervalRTree()
 	{
 		
@@ -61,13 +66,21 @@ public class SortedPackedIntervalRTree
     leaves.add(new IntervalRTreeLeafNode(min, max, item));
 	}
 	
-  private void init()
+  private synchronized void init()
   {
+    // already built
     if (root != null) return;
+    
+    /**
+     * if leaves is empty then nothing has been inserted.
+     * In this case it is safe to leave the tree in an open state
+     */
+    if (leaves.size() == 0) return;
+    
     buildRoot();
   }
   
-  private synchronized void buildRoot() 
+  private void buildRoot()
   {
     if (root != null) return;
     root = buildTree();
@@ -94,12 +107,12 @@ public class SortedPackedIntervalRTree
 			dest = temp;
 		}
 	}
-	
-  private int level = 0;
-  
+
+  //private int level = 0;
+
 	private void buildLevel(List src, List dest) 
   {
-    level++;
+    //level++;
 		dest.clear();
 		for (int i = 0; i < src.size(); i += 2) {
 			IntervalRTreeNode n1 = (IntervalRTreeNode) src.get(i);
@@ -117,12 +130,12 @@ public class SortedPackedIntervalRTree
 			}
 		}
 	}
-	
-  private void printNode(IntervalRTreeNode node)
-  {
-    System.out.println(WKTWriter.toLineString(new Coordinate(node.min, level), new Coordinate(node.max, level)));
-  }
-  
+
+  // private void printNode(IntervalRTreeNode node)
+  // {
+  //   System.out.println(WKTWriter.toLineString(new Coordinate(node.min, level), new Coordinate(node.max, level)));
+  // }
+
   /**
    * Search for intervals in the index which intersect the given closed interval
    * and apply the visitor to them.
@@ -134,7 +147,11 @@ public class SortedPackedIntervalRTree
 	public void query(double min, double max, ItemVisitor visitor)
 	{
     init();
-
+    
+    // if root is null tree must be empty
+    if (root == null) 
+      return;
+    
 		root.query(min, max, visitor);
 	}
   

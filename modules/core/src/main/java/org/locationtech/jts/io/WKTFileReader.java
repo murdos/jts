@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StreamTokenizer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +40,7 @@ public class WKTFileReader
 	private int count = 0;
 	private int limit = -1;
 	private int offset = 0;
+  private boolean isStrictParsing = true;
 	
   /**
    * Creates a new <tt>WKTFileReader</tt> given the <tt>File</tt> to read from 
@@ -78,16 +78,28 @@ public class WKTFileReader
     this.wktReader = wktReader;
   }
   
-	/**
-	 * Sets the maximum number of geometries to read.
+  /**
+   * Sets the maximum number of geometries to read.
    * 
-	 * @param limit the maximum number of geometries to read
-	 */
-	public void setLimit(int limit)
-	{
-		this.limit = limit;
-	}
-	
+   * @param limit the maximum number of geometries to read
+   */
+  public void setLimit(int limit)
+  {
+    this.limit = limit;
+  }
+  
+  /**
+   * Allows ignoring WKT parse errors 
+   * after at least one geometry has been read,
+   * to return a partial result.
+   * 
+   * @param isStrict whether to ignore parse errors
+   */
+  public void setStrictParsing(boolean isStrict)
+  {
+    this.isStrictParsing = isStrict;
+  }
+  
 	/**
 	 * Sets the number of geometries to skip before storing.
    * 
@@ -127,42 +139,52 @@ public class WKTFileReader
 		}
 	}
 	
-	private List read(BufferedReader bufferedReader) throws IOException,
-			ParseException {
-		List geoms = new ArrayList();
-		while (! isAtEndOfFile(bufferedReader) && ! isAtLimit(geoms)) {
-			Geometry g = wktReader.read(bufferedReader);
-			if (count >= offset)
-				geoms.add(g);
-			count++;
-		}
-		return geoms;
-	}
-	
+  private List read(BufferedReader bufferedReader) 
+      throws IOException, ParseException {
+    List geoms = new ArrayList();
+    try {
+      read(bufferedReader, geoms);
+    }
+    catch (ParseException ex) {
+      // throw if strict or error is on first geometry
+      if (isStrictParsing || geoms.size() == 0)
+        throw ex;
+    }
+    return geoms;
+  }
+
+  private void read(BufferedReader bufferedReader, List geoms) 
+      throws IOException, ParseException {
+    while (!isAtEndOfFile(bufferedReader) && !isAtLimit(geoms)) {
+      Geometry g = wktReader.read(bufferedReader);
+      if ( count >= offset )
+        geoms.add(g);
+      count++;
+    }
+  }
+
 	private boolean isAtLimit(List geoms)
 	{
 		if (limit < 0) return false;
 		if (geoms.size() < limit) return false;
 		return true;
 	}
-	
-  private static final int MAX_LOOKAHEAD = 1000;
-  
+ 
   /**
-	 * Tests if reader is at EOF.
+	 * Tests if reader is at EOF, and skips any leading whitespace
 	 */
-	private boolean isAtEndOfFile(BufferedReader bufferedReader)
-			throws IOException 
-			{
-		bufferedReader.mark(MAX_LOOKAHEAD);
-
-		StreamTokenizer tokenizer = new StreamTokenizer(bufferedReader);
-		int type = tokenizer.nextToken();
-
-		if (type == StreamTokenizer.TT_EOF) {
-			return true;
-		}
-		bufferedReader.reset();
-		return false;
-	}
+  private boolean isAtEndOfFile(BufferedReader bufferedReader) throws IOException {
+    // skip whitespace
+    int ch;
+    do {
+      bufferedReader.mark(1);
+      ch = bufferedReader.read();
+      // EOF reached
+      if (ch < 0) return true;
+    } while (Character.isWhitespace(ch));
+    bufferedReader.reset();
+    
+    return false;
+  }
+	 
 }

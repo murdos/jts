@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -13,14 +13,19 @@ package org.locationtech.jtstest.geomfunction;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
-import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jtstest.function.AffineTransformationFunctions;
 import org.locationtech.jtstest.function.BoundaryFunctions;
 import org.locationtech.jtstest.function.BufferByUnionFunctions;
 import org.locationtech.jtstest.function.BufferFunctions;
-import org.locationtech.jtstest.function.LineSegmentFunctions;
 import org.locationtech.jtstest.function.ConstructionFunctions;
 import org.locationtech.jtstest.function.ConversionFunctions;
 import org.locationtech.jtstest.function.CreateFractalShapeFunctions;
@@ -30,14 +35,23 @@ import org.locationtech.jtstest.function.DiffFunctions;
 import org.locationtech.jtstest.function.DissolveFunctions;
 import org.locationtech.jtstest.function.DistanceFunctions;
 import org.locationtech.jtstest.function.DoubleKeyMap;
+import org.locationtech.jtstest.function.EditFunctions;
 import org.locationtech.jtstest.function.GeometryFunctions;
 import org.locationtech.jtstest.function.JTSFunctions;
 import org.locationtech.jtstest.function.LineHandlingFunctions;
+import org.locationtech.jtstest.function.LineSegmentFunctions;
 import org.locationtech.jtstest.function.LinearReferencingFunctions;
 import org.locationtech.jtstest.function.NodingFunctions;
 import org.locationtech.jtstest.function.OffsetCurveFunctions;
 import org.locationtech.jtstest.function.OrientationFunctions;
 import org.locationtech.jtstest.function.OverlayFunctions;
+import org.locationtech.jtstest.function.OverlayNGFunctions;
+import org.locationtech.jtstest.function.OverlayNGOptFunctions;
+import org.locationtech.jtstest.function.OverlayNGRobustFunctions;
+import org.locationtech.jtstest.function.OverlayNGSRFunctions;
+import org.locationtech.jtstest.function.OverlayNGSnappingFunctions;
+import org.locationtech.jtstest.function.OverlayNGStrictFunctions;
+import org.locationtech.jtstest.function.OverlayNGTestFunctions;
 import org.locationtech.jtstest.function.OverlayNoSnapFunctions;
 import org.locationtech.jtstest.function.PointLocationFunctions;
 import org.locationtech.jtstest.function.PolygonOverlayFunctions;
@@ -51,6 +65,7 @@ import org.locationtech.jtstest.function.SortingFunctions;
 import org.locationtech.jtstest.function.SpatialIndexFunctions;
 import org.locationtech.jtstest.function.SpatialPredicateFunctions;
 import org.locationtech.jtstest.function.TriangleFunctions;
+import org.locationtech.jtstest.function.TriangulatePolyFunctions;
 import org.locationtech.jtstest.function.TriangulationFunctions;
 import org.locationtech.jtstest.function.ValidationFunctions;
 import org.locationtech.jtstest.function.WriterFunctions;
@@ -74,11 +89,11 @@ public class GeometryFunctionRegistry
     funcRegistry.add(BufferByUnionFunctions.class);
     funcRegistry.add(ConstructionFunctions.class);
     funcRegistry.add(ConversionFunctions.class);
+    funcRegistry.add(EditFunctions.class);
     funcRegistry.add(LinearReferencingFunctions.class);
     funcRegistry.add(LineHandlingFunctions.class);
     funcRegistry.add(NodingFunctions.class);
     funcRegistry.add(PolygonizeFunctions.class);
-    funcRegistry.add(PolygonOverlayFunctions.class);
     funcRegistry.add(PrecisionFunctions.class);
     funcRegistry.add(PreparedGeometryFunctions.class);
     funcRegistry.add(SelectionFunctions.class);
@@ -98,13 +113,26 @@ public class GeometryFunctionRegistry
     funcRegistry.add(OrientationFunctions.class);
     funcRegistry.add(LineSegmentFunctions.class);
     funcRegistry.add(OverlayFunctions.class);
+    
+    funcRegistry.add(OverlayNGSRFunctions.class);
+    funcRegistry.add(OverlayNGFunctions.class);
+    funcRegistry.add(OverlayNGRobustFunctions.class);
+    funcRegistry.add(OverlayNGSnappingFunctions.class);
+    funcRegistry.add(OverlayNGStrictFunctions.class);
+    
+    funcRegistry.add(OverlayNGTestFunctions.class);
+
+    funcRegistry.add(OverlayNGOptFunctions.class);
+
     funcRegistry.add(OverlayNoSnapFunctions.class);
     funcRegistry.add(PointLocationFunctions.class);
+    funcRegistry.add(PolygonOverlayFunctions.class);
     //funcRegistry.add(OverlayEnhancedPrecisionFunctions.class);
     //funcRegistry.add(OverlayCommonBitsRemovedFunctions.class);
     funcRegistry.add(SnappingFunctions.class);
     funcRegistry.add(SortingFunctions.class);
     funcRegistry.add(TriangulationFunctions.class);
+    funcRegistry.add(TriangulatePolyFunctions.class);
     funcRegistry.add(TriangleFunctions.class);
     funcRegistry.add(ValidationFunctions.class);
     funcRegistry.add(WriterFunctions.class);
@@ -217,13 +245,19 @@ public class GeometryFunctionRegistry
 		Method[] method = functionClass.getMethods();
 		for (int i = 0; i < method.length; i++) {
 			int mod = method[i].getModifiers();
-			if (Modifier.isStatic(mod) && Modifier.isPublic(mod)) {
+			if (Modifier.isStatic(mod) 
+			    && Modifier.isPublic(mod)
+			    && isGeometryFunction(method[i])) {
 				funcs.add(StaticMethodGeometryFunction.createFunction(method[i]));
 			}
 		}
 		return funcs;
 	}
 
+  public static boolean isGeometryFunction(Method method)
+  {
+    return Geometry.class.isAssignableFrom((method.getParameterTypes())[0]);
+  }
 	
 	/**
 	 * Adds a function if it does not currently

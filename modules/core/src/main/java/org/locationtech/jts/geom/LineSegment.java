@@ -1,12 +1,10 @@
-
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -16,9 +14,8 @@ package org.locationtech.jts.geom;
 import java.io.Serializable;
 
 import org.locationtech.jts.algorithm.Distance;
-import org.locationtech.jts.algorithm.HCoordinate;
+import org.locationtech.jts.algorithm.Intersection;
 import org.locationtech.jts.algorithm.LineIntersector;
-import org.locationtech.jts.algorithm.NotRepresentableException;
 import org.locationtech.jts.algorithm.Orientation;
 import org.locationtech.jts.algorithm.RobustLineIntersector;
 
@@ -169,7 +166,7 @@ public class LineSegment
   
   /**
    * Determines the orientation index of a {@link Coordinate} relative to this segment.
-   * The orientation index is as defined in {@link Orientation#computeOrientation}.
+   * The orientation index is as defined in {@link Orientation#index(Coordinate, Coordinate, Coordinate)}.
    *
    * @param p the coordinate to compare
    *
@@ -177,7 +174,7 @@ public class LineSegment
    * @return -1 (RIGHT) if <code>p</code> is to the right of this segment
    * @return 0 (COLLINEAR) if <code>p</code> is collinear with this segment
    * 
-   * @see Orientation#computeOrientation(Coordinate, Coordinate, Coordinate)
+   * @see Orientation#index(Coordinate, Coordinate, Coordinate)
    */
   public int orientationIndex(Coordinate p)
   {
@@ -283,7 +280,7 @@ public class LineSegment
    */
   public Coordinate pointAlong(double segmentLengthFraction)
   {
-    Coordinate coord = new Coordinate();
+    Coordinate coord = p0.create();
     coord.x = p0.x + segmentLengthFraction * (p1.x - p0.x);
     coord.y = p0.y + segmentLengthFraction * (p1.y - p0.y);
     return coord;
@@ -329,7 +326,9 @@ public class LineSegment
     double offsetx = segx - uy;
     double offsety = segy + ux;
 
-    Coordinate coord = new Coordinate(offsetx, offsety);
+    Coordinate coord = p0.create();
+    coord.setX(offsetx);
+    coord.setY(offsety);
     return coord;
   }
 
@@ -407,10 +406,10 @@ public class LineSegment
    */
   public Coordinate project(Coordinate p)
   {
-    if (p.equals(p0) || p.equals(p1)) return new Coordinate(p);
+    if (p.equals(p0) || p.equals(p1)) return p.copy();
 
     double r = projectionFactor(p);
-    Coordinate coord = new Coordinate();
+    Coordinate coord = p.copy();
     coord.x = p0.x + r * (p1.x - p0.x);
     coord.y = p0.y + r * (p1.y - p0.y);
     return coord;
@@ -445,6 +444,53 @@ public class LineSegment
 
     return new LineSegment(newp0, newp1);
   }
+  
+  /**
+   * Computes the {@link LineSegment} that is offset from 
+   * the segment by a given distance.
+   * The computed segment is offset to the left of the line if the offset distance is
+   * positive, to the right if negative.
+   *
+   * @param offsetDistance the distance the point is offset from the segment
+   *    (positive is to the left, negative is to the right)
+   * @return a line segment offset by the specified distance
+   * 
+   * @throws IllegalStateException if the segment has zero length
+   */
+  public LineSegment offset(double offsetDistance) {
+    Coordinate offset0 = pointAlongOffset(0, offsetDistance);
+    Coordinate offset1 = pointAlongOffset(1, offsetDistance);
+    return new LineSegment(offset0, offset1);
+  }
+  
+  /**
+   * Computes the reflection of a point in the line defined
+   * by this line segment.
+   * 
+   * @param p the point to reflect
+   * @return the reflected point
+   */
+  public Coordinate reflect(Coordinate p) {
+    // general line equation
+    double A = p1.getY() - p0.getY();
+    double B = p0.getX() - p1.getX();
+    double C = p0.getY() * (p1.getX() - p0.getX()) - p0.getX()*( p1.getY() - p0.getY() );
+    
+    // compute reflected point
+    double A2plusB2 = A*A + B*B;
+    double A2subB2 = A*A - B*B;
+    
+    double x = p.getX();
+    double y = p.getY();
+    double rx = ( -A2subB2*x - 2*A*B*y - 2*A*C ) / A2plusB2;
+    double ry = ( A2subB2*y - 2*A*B*x - 2*B*C ) / A2plusB2;
+    
+    Coordinate coord = p.copy();
+    coord.setX(rx);
+    coord.setY(ry);
+    return coord;
+  }
+  
   /**
    * Computes the closest point on this line segment to another point.
    * @param p the point to find the closest point to
@@ -558,14 +604,8 @@ public class LineSegment
    */
   public Coordinate lineIntersection(LineSegment line)
   {
-    try {
-      Coordinate intPt = HCoordinate.intersection(p0, p1, line.p0, line.p1);
-      return intPt;
-    }
-    catch (NotRepresentableException ex) {
-      // eat this exception, and return null;
-    }
-    return null;
+    Coordinate intPt = Intersection.intersection(p0, p1, line.p0, line.p1);
+    return intPt;
   }
 
   /**

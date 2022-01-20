@@ -1,13 +1,10 @@
-
-
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -17,6 +14,7 @@ package org.locationtech.jts.geomgraph;
 
 
 import org.locationtech.jts.geom.Location;
+import org.locationtech.jts.geom.Position;
 
 /**
   * A TopologyLocation is the labelling of a
@@ -53,6 +51,9 @@ public class TopologyLocation {
    * parameters are Location.NULL, Location.EXTERIOR, Location.BOUNDARY,
    * and Location.INTERIOR.
    * @see Location
+   * @param on on position
+   * @param left left position
+   * @param right right position
    */
   public TopologyLocation(int on, int left, int right) {
    init(3);
@@ -157,6 +158,8 @@ public class TopologyLocation {
   /**
    * merge updates only the NULL attributes of this object
    * with the attributes of another.
+   *
+   * @param gl Topology location
    */
   public void merge(TopologyLocation gl)
   {

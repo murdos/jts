@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -53,22 +53,29 @@ public class ConnectedTestCase extends TestCase {
 		return connection;
 	}
 
+
+
 	/**
 	 * @see junit.framework.TestCase#setUp()
 	 */
 	protected void setUp() throws Exception {
 		super.setUp();
-		
+
 		Properties props = new Properties();
-		URL path = ClassLoader.getSystemResource("com/vividsolutions/jts/io/oracle/connection.properties");
+		URL path = ClassLoader.getSystemResource("org/locationtech/jts/io/oracle/connection.properties");
+		if( path == null ) {
+			return;
+		}
 		props.load(path.openStream());
-		
+		if( "TRUE".equalsIgnoreCase(props.getProperty("test.skip"))) {
+			return;
+		}
 		connection = getOracleConnection(
-		    props.getProperty("test.server"),
-		    props.getProperty("test.port"),
-				props.getProperty("test.sid"),
-				props.getProperty("test.user"),
-				props.getProperty("test.pwd"));
+			props.getProperty("test.server"),
+			props.getProperty("test.port"),
+			props.getProperty("test.sid"),
+			props.getProperty("test.user"),
+			props.getProperty("test.pwd"));
 	}
 
   private static OracleConnection getOracleConnection(String server, String port, String sid, String userid, String pwd) throws SQLException {

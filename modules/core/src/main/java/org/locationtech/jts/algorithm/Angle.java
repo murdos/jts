@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -17,7 +17,7 @@ import org.locationtech.jts.geom.Coordinate;
  * Utility functions for working with angles.
  * Unless otherwise noted, methods in this class express angles in radians.
  */
-public class Angle
+@SuppressWarnings("DuplicatedCode") public class Angle
 {
   /**
    * The value of 2*Pi
@@ -104,7 +104,7 @@ public class Angle
    */
   public static boolean isAcute(Coordinate p0, Coordinate p1, Coordinate p2)
   {
-    // relies on fact that A dot B is positive iff A ang B is acute
+    // relies on fact that A dot B is positive if A ang B is acute
     double dx0 = p0.x - p1.x;
     double dy0 = p0.y - p1.y;
     double dx1 = p2.x - p1.x;
@@ -126,7 +126,7 @@ public class Angle
    */
   public static boolean isObtuse(Coordinate p0, Coordinate p1, Coordinate p2)
   {
-    // relies on fact that A dot B is negative iff A ang B is obtuse
+    // relies on fact that A dot B is negative if A ang B is obtuse
     double dx0 = p0.x - p1.x;
     double dy0 = p0.y - p1.y;
     double dx1 = p2.x - p1.x;
@@ -180,6 +180,24 @@ public class Angle
 			return angDel - PI_TIMES_2;
 		return angDel;
   }
+  
+  /**
+   * Computes the angle of the unoriented bisector 
+   * of the smallest angle between two vectors.
+   * The computed angle will be in the range (-Pi, Pi].
+   * 
+   * @param tip1 the tip of v1
+   * @param tail the tail of each vector
+   * @param tip2 the tip of v2
+   * @return the angle of the bisector between v1 and v2
+   */
+  public static double bisector(Coordinate tip1, Coordinate tail,
+      Coordinate tip2)
+  {
+    double angDel = angleBetweenOriented(tip1, tail, tip2);
+    double angBi = angle(tail, tip1) + angDel / 2;
+    return normalize(angBi);
+  }
 
   /**
 	 * Computes the interior angle between two segments of a ring. The ring is
@@ -192,13 +210,13 @@ public class Angle
 	 *          the next point of the ring
 	 * @param p2
 	 *          the next point of the ring
-	 * @return the interior angle based at <code>p1</code>
+	 * @return the interior angle based at {@code p1}
 	 */
   public static double interiorAngle(Coordinate p0, Coordinate p1, Coordinate p2)
   {
     double anglePrev = Angle.angle(p1, p0);
     double angleNext = Angle.angle(p1, p2);
-    return Math.abs(angleNext - anglePrev);
+    return normalizePositive(angleNext - anglePrev);
   }
 
   /**
@@ -299,5 +317,19 @@ public class Angle
     }
 
     return delAngle;
+  }
+  
+  /**
+   * Projects a point by a given angle and distance.
+   * 
+   * @param p the point to project
+   * @param angle the angle at which to project
+   * @param dist the distance to project
+   * @return the projected point
+   */
+  public static Coordinate project(Coordinate p, double angle, double dist) {
+    double x = p.getX() + dist * Math.cos(angle);
+    double y = p.getY() + dist * Math.sin(angle);
+    return new Coordinate(x, y);
   }
 }

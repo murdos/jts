@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -17,13 +17,14 @@ import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 
 import junit.framework.TestCase;
+import test.jts.GeometryTestCase;
 
 
 /**
  * @version 1.7
  */
 public class DouglasPeuckerSimplifierTest
-    extends TestCase
+    extends GeometryTestCase
 {
   public DouglasPeuckerSimplifierTest(String name) {
     super(name);
@@ -80,7 +81,7 @@ public class DouglasPeuckerSimplifierTest
         DPSimplifierResult.getResult(
       "POLYGON ((80 200, 240 200, 240 60, 80 60, 80 200), (120 120, 220 120, 180 199, 160 200, 140 199, 120 120))",
         10.0))
-        .setExpectedResult("POLYGON ((80 200, 160 200, 240 200, 240 60, 80 60, 80 200), (160 200, 140 199, 120 120, 220 120, 180 199, 160 200)))")
+        .setExpectedResult("POLYGON ((80 200, 240 200, 240 60, 80 60, 80 200), (120 120, 220 120, 180 199, 160 200, 140 199, 120 120))")
         .test();
   }
   public void testFlattishPolygon() throws Exception {
@@ -88,6 +89,7 @@ public class DouglasPeuckerSimplifierTest
         DPSimplifierResult.getResult(
       "POLYGON ((0 0, 50 0, 53 0, 55 0, 100 0, 70 1,  60 1, 50 1, 40 1, 0 0))",
         10.0))
+        .setExpectedResult("POLYGON EMPTY")
         .test();
   }
   public void testTinySquare() throws Exception {
@@ -151,6 +153,41 @@ public class DouglasPeuckerSimplifierTest
       + ")"
       ,10.0))
         .test();
+  }
+  
+  /**
+   * Test that a polygon made invalid by simplification
+   * is fixed in a sensible way.
+   * Fixed by buffer(0) area-base orientation
+   * See https://github.com/locationtech/jts/issues/498
+   */
+  public void testInvalidPolygonFixed() {
+    checkDP(
+        "POLYGON ((21.32686 47.78723, 21.32386 47.79023, 21.32186 47.80223, 21.31486 47.81023, 21.32786 47.81123, 21.33986 47.80223, 21.33886 47.81123, 21.32686 47.82023, 21.32586 47.82723, 21.32786 47.82323, 21.33886 47.82623, 21.34186 47.82123, 21.36386 47.82223, 21.40686 47.81723, 21.32686 47.78723))", 
+        0.0036,
+        "POLYGON ((21.32686 47.78723, 21.31486 47.81023, 21.32786 47.81123, 21.33986 47.80223, 21.328068201892744 47.823286782334385, 21.33886 47.82623, 21.34186 47.82123, 21.40686 47.81723, 21.32686 47.78723))"
+        );
+  }
+
+  /**
+   * Test that a collapsed polygon is removed.
+   * Not an error in JTS, but included to avoid regression errors in future.
+   * 
+   * See https://trac.osgeo.org/geos/ticket/1115
+   */
+  public void testPolygonCollapseRemoved() {
+    checkDP(
+        "MULTIPOLYGON (((-76.02716827 36.55671692, -75.99866486 36.55665207, -75.91191864 36.54253006, -75.92480469 36.47397614, -75.97727966 36.4780159, -75.97628784 36.51792526, -76.02716827 36.55671692)), ((-75.90198517 36.55619812, -75.8781662 36.55587387, -75.77315521 36.22925568, -75.78317261 36.22519302, -75.90198517 36.55619812)))", 
+        0.05,
+        "POLYGON ((-76.02716827 36.55671692, -75.91191864 36.54253006, -75.92480469 36.47397614, -76.02716827 36.55671692))"
+        );
+  }
+  
+  private void checkDP(String wkt, double tolerance, String wktExpected) {
+    Geometry geom = read(wkt);
+    Geometry result = DouglasPeuckerSimplifier.simplify(geom, tolerance);
+    Geometry expected = read(wktExpected);
+    checkEqual(expected, result);
   }
 }
 

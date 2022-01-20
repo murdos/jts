@@ -1,13 +1,10 @@
-
-
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -25,6 +22,7 @@ import org.locationtech.jts.algorithm.BoundaryNodeRule;
 import org.locationtech.jts.algorithm.locate.SimplePointInAreaLocator;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Location;
+import org.locationtech.jts.geom.Position;
 import org.locationtech.jts.geom.TopologyException;
 import org.locationtech.jts.util.Assert;
 
@@ -58,12 +56,15 @@ abstract public class EdgeEndStar
 
   /**
    * Insert a EdgeEnd into this EdgeEndStar
+   * @param e EdgeEnd
    */
   abstract public void insert(EdgeEnd e);
 
   /**
    * Insert an EdgeEnd into the map, and clear the edgeList cache,
    * since the list of edges has now changed
+   * @param e EdgeEnd
+   * @param obj Object
    */
   protected void insertEdgeEnd(EdgeEnd e, Object obj)
   {
@@ -91,6 +92,8 @@ abstract public class EdgeEndStar
    * copying the map collection to a list.  (This assumes that
    * once an iterator is requested, it is likely that insertion into
    * the map is complete).
+   *
+   * @return access to ordered list of edges
    */
   public Iterator iterator()
   {

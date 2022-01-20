@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -14,7 +14,8 @@ package org.locationtech.jts.edgegraph;
 
 import org.locationtech.jts.algorithm.Orientation;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geomgraph.Quadrant;
+import org.locationtech.jts.geom.Quadrant;
+import org.locationtech.jts.io.WKTWriter;
 import org.locationtech.jts.util.Assert;
 
 /**
@@ -24,11 +25,16 @@ import org.locationtech.jts.util.Assert;
  * and terminate at a <b>destination</b> vertex.
  * HalfEdges always occur in symmetric pairs, with the {@link #sym()} method
  * giving access to the oppositely-oriented component.
- * HalfEdges with the same origin are ordered 
- * so that the ring of their dest points is oriented CCW.
  * HalfEdges and the methods on them form an edge algebra,
  * which can be used to traverse and query the topology
  * of the graph formed by the edges.
+ * <p>
+ * To support graphs where the edges are sequences of coordinates
+ * each edge may also have a direction point supplied.
+ * This is used to determine the ordering
+ * of the edges around the origin.
+ * HalfEdges with the same origin are ordered 
+ * so that the ring of edges formed by them is oriented CCW.
  * <p>
  * By design HalfEdges carry minimal information
  * about the actual usage of the graph they represent.
@@ -55,29 +61,7 @@ public class HalfEdge {
   public static HalfEdge create(Coordinate p0, Coordinate p1) {
     HalfEdge e0 = new HalfEdge(p0);
     HalfEdge e1 = new HalfEdge(p1);
-    e0.init(e1);
-    return e0;
-  }
-
-  /**
-   * Initialize a symmetric pair of halfedges.
-   * Intended for use by {@link EdgeGraph} subclasses.
-   * The edges are initialized to have each other 
-   * as the {@link sym} edge, and to have {@link next} pointers
-   * which point to edge other.
-   * This effectively creates a graph containing a single edge.
-   * 
-   * @param e0 a halfedge
-   * @param e1 a symmetric halfedge
-   * @return the initialized edge e0
-   */
-  public static HalfEdge init(HalfEdge e0, HalfEdge e1)
-  {
-    // ensure only newly created edges can be initialized, to prevent information loss
-    if (e0.sym != null || e1.sym != null
-        || e0.next != null || e1.next != null)
-      throw new IllegalStateException("Edges are already initialized");
-    e0.init(e1);
+    e0.link(e1);
     return e0;
   }
   
@@ -86,7 +70,7 @@ public class HalfEdge {
   private HalfEdge next;
 
   /**
-   * Creates an edge originating from a given coordinate.
+   * Creates a half-edge originating from a given coordinate.
    * 
    * @param orig the origin coordinate
    */
@@ -94,13 +78,19 @@ public class HalfEdge {
     this.orig = orig;
   }
 
-  protected void init(HalfEdge e)
+  /**
+   * Links this edge with its sym (opposite) edge.
+   * This must be done for each pair of edges created.
+   * 
+   * @param sym the sym edge to link.
+   */
+  public void link(HalfEdge sym)
   {
-    setSym(e);
-    e.setSym(this);
+    setSym(sym);
+    sym.setSym(this);
     // set next ptrs for a single segment
-    setNext(e);
-    e.setNext(this);
+    setNext(sym);
+    sym.setNext(this);
   }
   
   /**
@@ -117,6 +107,35 @@ public class HalfEdge {
    */
   public Coordinate dest() { return sym.orig; }
 
+  /**
+   * The X component of the direction vector.
+   * 
+   * @return the X component of the direction vector
+   */
+  double directionX() { return directionPt().getX() - orig.getX(); }
+  
+  /**
+   * The Y component of the direction vector.
+   * 
+   * @return the Y component of the direction vector
+   */
+  double directionY() { return directionPt().getY() - orig.getY(); }
+  
+  /**
+   * Gets the direction point of this edge.
+   * In the base case this is the dest coordinate 
+   * of the edge.
+   * Subclasses may override to 
+   * allow a HalfEdge to represent an edge with more than two coordinates.
+   * 
+   * @return the direction point for the edge
+   */
+  protected Coordinate directionPt() {
+    // default is to assume edges have only 2 vertices
+    // subclasses may override to provide an internal direction point
+    return dest();
+  }
+  
   /**
    * Gets the symmetric pair edge of this edge.
    * 
@@ -137,12 +156,22 @@ public class HalfEdge {
   }
 
   /**
+   * Sets the next edge CCW around the destination vertex of this edge.
+   * 
+   * @param e the next edge
+   */
+  private void setNext(HalfEdge e)
+  {
+    next = e;
+  }
+  
+  /**
    * Gets the next edge CCW around the 
    * destination vertex of this edge,
-   * with the dest vertex as its origin.
-   * If the vertex has degree 1 then this is the <b>sym</b> edge.
+   * originating at that vertex.
+   * If the destination vertex has degree 1 then this is the <b>sym</b> edge.
    * 
-   * @return the next edge
+   * @return the next outgoing edge CCW around the destination vertex
    */
   public HalfEdge next()
   {
@@ -150,33 +179,38 @@ public class HalfEdge {
   }
   
   /**
-   * Gets the edge previous to this one
-   * (with dest being the same as this orig).
+   * Gets the previous edge CW around the origin
+   * vertex of this edge, 
+   * with that vertex being its destination.
+   * <p>
+   * It is always true that <code>e.next().prev() == e</code>
+   * <p>
+   * Note that this requires a scan of the origin edges, 
+   * so may not be efficient for some uses.
    * 
-   * @return the previous edge to this one
+   * @return the previous edge CW around the origin vertex
    */
   public HalfEdge prev() {
-    return sym.next().sym;
+    HalfEdge curr = this;
+    HalfEdge prev = this;
+    do {
+      prev = curr;
+      curr = curr.oNext();
+    } while (curr != this);
+    return prev.sym;
   }
 
   /**
    * Gets the next edge CCW around the origin of this edge,
    * with the same origin.
+   * If the origin vertex has degree 1 then this is the edge itself.
+   * <p>
+   * <code>e.oNext()</code> is equal to <code>e.sym().next()</code>
    * 
    * @return the next edge around the origin
    */
   public HalfEdge oNext() {
     return sym.next;
-  }
-  
-  /**
-   * Sets the next edge CCW around the destination vertex of this edge.
-   * 
-   * @param e the next edge
-   */
-  public void setNext(HalfEdge e)
-  {
-    next = e;
   }
 
   /**
@@ -226,8 +260,7 @@ public class HalfEdge {
       return;
     }
     
-    // Scan edges
-    // until insertion point is found
+    // Scan edges until insertion point is found
     HalfEdge ePrev = insertionEdge(eAdd);
     ePrev.insertAfter(eAdd);
   }
@@ -295,7 +328,7 @@ public class HalfEdge {
    * 
    * @return true if the origin edges are sorted correctly
    */
-  boolean isEdgesSorted() {
+  public boolean isEdgesSorted() {
     // find lowest edge at origin
     HalfEdge lowest = findLowest();
     HalfEdge e = lowest;
@@ -361,49 +394,41 @@ public class HalfEdge {
    * it is trivial to determine which edge has a greater angle.
    * 
    * <li>if the vectors lie in the same quadrant, the 
-   * {@link Orientation#computeOrientation(Coordinate, Coordinate, Coordinate)} function
+   * {@link Orientation#index(Coordinate, Coordinate, Coordinate)} function
    * can be used to determine the relative orientation of the vectors.
    * </ul>
    */
   public int compareAngularDirection(HalfEdge e)
   {
-    double dx = deltaX();
-    double dy = deltaY();
-    double dx2 = e.deltaX();
-    double dy2 = e.deltaY();
+    double dx = directionX();
+    double dy = directionY();
+    double dx2 = e.directionX();
+    double dy2 = e.directionY();
     
     // same vector
     if (dx == dx2 && dy == dy2)
       return 0;
     
-    double quadrant = Quadrant.quadrant(dx, dy);
-    double quadrant2 = Quadrant.quadrant(dx2, dy2);
-    
-    // if the vectors are in different quadrants, determining the ordering is trivial
+    int quadrant = Quadrant.quadrant(dx, dy);
+    int quadrant2 = Quadrant.quadrant(dx2, dy2);
+
+    /**
+     * If the direction vectors are in different quadrants, 
+     * that determines the ordering
+     */
     if (quadrant > quadrant2) return 1;
     if (quadrant < quadrant2) return -1;
-    // vectors are in the same quadrant
+    
+    //--- vectors are in the same quadrant
     // Check relative orientation of direction vectors
     // this is > e if it is CCW of e
-    return Orientation.index(e.orig, e.dest(), dest());
+    Coordinate dir1 = directionPt();
+    Coordinate dir2 = e.directionPt();
+    return Orientation.index(e.orig, dir2, dir1);
   }
-
-  /**
-   * The X component of the distance between the orig and dest vertices.
-   * 
-   * @return the X component of the edge length
-   */
-  public double deltaX() { return sym.orig.x - orig.x; }
   
   /**
-   * The Y component of the distance between the orig and dest vertices.
-   * 
-   * @return the Y component of the edge length
-   */
-  public double deltaY() { return sym.orig.y - orig.y; }
-  
-  /**
-   * Computes a string representation of a HalfEdge.
+   * Provides a string representation of a HalfEdge.
    * 
    * @return a string representation
    */
@@ -415,6 +440,27 @@ public class HalfEdge {
         + ")";
   }
 
+  /**
+   * Provides a string representation of the edges around
+   * the origin node of this edge.
+   * Uses the subclass representation for each edge.
+   * 
+   * @return a string showing the edges around the origin
+   */
+  public String toStringNode() {
+    Coordinate orig = orig();
+    Coordinate dest = dest();
+    StringBuilder sb = new StringBuilder();
+    sb.append("Node( " + WKTWriter.format(orig) + " )" + "\n");
+    HalfEdge e = this;
+    do {
+      sb.append("  -> " + e);
+      sb.append("\n");
+      e = e.oNext();
+    } while (e != this);
+    return sb.toString();
+  }
+  
   /**
    * Computes the degree of the origin vertex.
    * The degree is the number of edges
@@ -434,6 +480,7 @@ public class HalfEdge {
 
   /**
    * Finds the first node previous to this edge, if any.
+   * A node has degree {@code <> 2}.
    * If no such node exists (i.e. the edge is part of a ring)
    * then null is returned.
    * 

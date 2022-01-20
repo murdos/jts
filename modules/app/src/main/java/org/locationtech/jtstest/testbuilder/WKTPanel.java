@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -19,7 +19,6 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.SystemColor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -28,9 +27,8 @@ import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JLabel;
+ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
@@ -40,6 +38,8 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jtstest.testbuilder.geom.GeometryUtil;
+import org.locationtech.jtstest.testbuilder.io.IOUtil;
 import org.locationtech.jtstest.testbuilder.model.DisplayParameters;
 import org.locationtech.jtstest.testbuilder.model.GeometryEditModel;
 import org.locationtech.jtstest.testbuilder.model.GeometryType;
@@ -362,17 +362,24 @@ public class WKTPanel extends JPanel
 
     public void setText(Geometry g, int geomIndex)
     {
+      String shortForm = GeometryEditModel.toStringVeryLarge(g);
       String txt = null;
       if (g == null)
         txt = "";
       else if (g.getNumPoints() > DisplayParameters.MAX_DISPLAY_POINTS)
-        txt = GeometryEditModel.toStringVeryLarge(g);
+        txt = shortForm;
       else
         txt = GeometryEditModel.getText(g, GeometryType.WELLKNOWNTEXT);
       
       switch (geomIndex) {
-      case 0: aTextArea.setText(txt); break;
-      case 1: bTextArea.setText(txt); break;
+      case 0: 
+        aTextArea.setText(txt);
+        aLabel.setToolTipText(GeometryUtil.structureSummary(g));
+        break;
+      case 1: 
+        bTextArea.setText(txt); 
+        bLabel.setToolTipText(GeometryUtil.structureSummary(g));
+        break;
       }
     }
     
@@ -435,10 +442,16 @@ public class WKTPanel extends JPanel
     
     void copy(ActionEvent e, int geomIndex)
     {
-      boolean isFormatted = 0 != (e.getModifiers() & ActionEvent.CTRL_MASK);
       Geometry g = tbModel.getCurrentCase().getGeometry(geomIndex);
-      if (g != null)
-        SwingUtil.copyToClipboard(g, isFormatted);
+      if (g == null) return;
+      
+      if (SwingUtil.isShiftKeyPressed(e)) {
+        String wkb = IOUtil.toWKBHex(g);
+        SwingUtil.copyToClipboard(wkb, false);
+        return;
+      }
+      boolean isFormatted = SwingUtil.isCtlKeyPressed(e);
+      SwingUtil.copyToClipboard(g, isFormatted);
     }
     
     void aPasteButton_actionPerformed(ActionEvent e)

@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -33,7 +33,7 @@ import org.locationtech.jts.geom.LineString;
 /**
  * Dissolves the linear components 
  * from a collection of {@link Geometry}s
- * into a set of maximal-length {@link Linestring}s
+ * into a set of maximal-length {@link LineString}s
  * in which every unique segment appears once only.
  * The output linestrings run between node vertices
  * of the input, which are vertices which have
@@ -70,8 +70,8 @@ public class LineDissolver
   
   private Geometry result;
   private GeometryFactory factory;
-  private DissolveEdgeGraph graph;
-  private List lines = new ArrayList();
+  private final DissolveEdgeGraph graph;
+  private final List lines = new ArrayList();
 
   public LineDissolver()
   {
@@ -153,7 +153,7 @@ public class LineDissolver
     result = factory.buildGeometry(lines);
   }
 
-  private Stack nodeEdgeStack = new Stack();
+  private final Stack nodeEdgeStack = new Stack();
   
   private void process(HalfEdge e) {
     HalfEdge eNode = e.prevNode();

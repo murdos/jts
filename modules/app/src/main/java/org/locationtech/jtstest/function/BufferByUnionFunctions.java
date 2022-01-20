@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -15,19 +15,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryCollectionIterator;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.util.LinearComponentExtracter;
-import org.locationtech.jts.noding.SegmentString;
-import org.locationtech.jts.operation.buffer.BufferInputLineSimplifier;
-import org.locationtech.jts.operation.buffer.BufferOp;
-import org.locationtech.jts.operation.buffer.BufferParameters;
-import org.locationtech.jts.operation.buffer.OffsetCurveSetBuilder;
-import org.locationtech.jts.operation.buffer.validate.BufferResultValidator;
+import org.locationtech.jts.operation.overlayng.OverlayNG;
+import org.locationtech.jts.operation.overlayng.OverlayNGRobust;
 import org.locationtech.jtstest.geomfunction.Metadata;
 
 
@@ -68,17 +61,29 @@ public class BufferByUnionFunctions {
     return g.union(segBuf);
   }
   
-  public static Geometry bufferByChains(Geometry g, double distance,
-      @Metadata(title="Max Chain Size")
+  public static Geometry bufferBySections(Geometry g, double distance,
+      @Metadata(title="Section Size")
       int maxChainSize)
   {
     if (maxChainSize <= 0)
-      throw new IllegalArgumentException("Maximum Chain Size must be specified as an input parameter");
+      throw new IllegalArgumentException("Section Size must be specified as an input parameter");
     Geometry segs = LineHandlingFunctions.extractChains(g, maxChainSize);
     double posDist = Math.abs(distance);
     Geometry segBuf = bufferByComponents(segs, posDist);
     if (distance < 0.0) 
-      return g.difference(segBuf);
-    return g.union(segBuf);
+      return OverlayNGRobust.overlay(g, segBuf, OverlayNG.DIFFERENCE);
+    return OverlayNGRobust.overlay(g, segBuf, OverlayNG.UNION);
+  }
+  
+  public static Geometry sectionBuffers(Geometry g, double distance,
+      @Metadata(title="Section Size")
+      int maxChainSize)
+  {
+    if (maxChainSize <= 0)
+      throw new IllegalArgumentException("Section Size must be specified as an input parameter");
+    Geometry segs = LineHandlingFunctions.extractChains(g, maxChainSize);
+    double posDist = Math.abs(distance);
+    Geometry segBuf = componentBuffers(segs, posDist);
+    return segBuf;
   }
 }

@@ -1,17 +1,15 @@
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
  */
 package org.locationtech.jts.index.strtree;
-
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -19,23 +17,25 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.PriorityQueue;
 
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.index.ItemVisitor;
 import org.locationtech.jts.index.SpatialIndex;
 import org.locationtech.jts.util.Assert;
-import org.locationtech.jts.util.PriorityQueue;
 
 
 /**
- *  A query-only R-tree created using the Sort-Tile-Recursive (STR) algorithm.
- *  For two-dimensional spatial data.
+ * A query-only R-tree created using the Sort-Tile-Recursive (STR) algorithm.
+ * For two-dimensional spatial data.
  * <P>
- *  The STR packed R-tree is simple to implement and maximizes space
- *  utilization; that is, as many leaves as possible are filled to capacity.
- *  Overlap between nodes is far less than in a basic R-tree. However, once the
- *  tree has been built (explicitly or on the first call to #query), items may
- *  not be added or removed.
+ * The STR packed R-tree is simple to implement and maximizes space
+ * utilization; that is, as many leaves as possible are filled to capacity.
+ * Overlap between nodes is far less than in a basic R-tree. 
+ * However, the index is semi-static; once the tree has been built 
+ * (which happens automatically upon the first query), items may
+ * not be added.
+ * Items may be removed from the tree using {@link #remove(Envelope, Object)}.
  * <P>
  * Described in: P. Rigaux, Michel Scholl and Agnes Voisard.
  * <i>Spatial Databases With Application To GIS</i>.
@@ -54,9 +54,9 @@ public class STRtree extends AbstractSTRtree
 implements SpatialIndex, Serializable 
 {
 
-  private static final class STRtreeNode extends AbstractNode
+  static final class STRtreeNode extends AbstractNode
   {
-    private STRtreeNode(int level)
+    STRtreeNode(int level)
     {
       super(level);
     }
@@ -185,6 +185,28 @@ implements SpatialIndex, Serializable
     super(nodeCapacity);
   }
 
+  /**
+   * Constructs an STRtree with the given maximum number of child nodes that
+   * a node may have, and the root that links to all other nodes
+   * <p>
+   * The minimum recommended capacity setting is 4.
+   *
+   */
+  public STRtree(int nodeCapacity, STRtreeNode root) {
+    super(nodeCapacity, root);
+  }
+
+  /**
+   * Constructs an STRtree with the given maximum number of child nodes that
+   * a node may have, and all leaf nodes in the tree
+   * <p>
+   * The minimum recommended capacity setting is 4.
+   *
+   */
+  public STRtree(int nodeCapacity, ArrayList itemBoundables) {
+    super(nodeCapacity, itemBoundables);
+  }
+
   protected AbstractNode createNode(int level) {
     return new STRtreeNode(level);
   }
@@ -207,7 +229,7 @@ implements SpatialIndex, Serializable
   public List query(Envelope searchEnv) {
     //Yes this method does something. It specifies that the bounds is an
     //Envelope. super.query takes an Object, not an Envelope. [Jon Aquino 10/24/2003]
-    return super.query(searchEnv);
+    return super.query((Object)searchEnv);
   }
 
   /**

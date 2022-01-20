@@ -1,12 +1,10 @@
-
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -18,15 +16,7 @@ import java.awt.image.*;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
@@ -34,16 +24,9 @@ import javax.swing.JFrame;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.PrecisionModel;
 import org.locationtech.jts.util.Assert;
-import org.locationtech.jtstest.test.TestCaseList;
-import org.locationtech.jtstest.test.Testable;
-import org.locationtech.jtstest.testbuilder.BusyDialog;
 import org.locationtech.jtstest.testbuilder.GeometryEditPanel;
 import org.locationtech.jtstest.testbuilder.model.TestBuilderModel;
 import org.locationtech.jtstest.testbuilder.model.TestCaseEdit;
-import org.locationtech.jtstest.testrunner.BooleanResult;
-import org.locationtech.jtstest.testrunner.Test;
-import org.locationtech.jtstest.util.FileUtil;
-import org.locationtech.jtstest.util.StringUtil;
 
 
 /**
@@ -62,7 +45,7 @@ public class PNGWriter {
 
   public PNGWriter() {
     geometryEditPanel.setSize(IMAGE_WIDTH, IMAGE_HEIGHT);
-    geometryEditPanel.setGridEnabled(false);
+    //geometryEditPanel.setGridEnabled(false);
     geometryEditPanel.setBorder(BorderFactory.createEmptyBorder());
     frame.getContentPane().add(geometryEditPanel);
   }

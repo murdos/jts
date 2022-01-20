@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -181,7 +181,7 @@ class EnvelopeIntersectsVisitor extends ShortCircuitedGeometryVisitor
 
   protected boolean isDone()
   {
-    return intersects == true;
+    return intersects;
   }
 }
 
@@ -248,7 +248,7 @@ class GeometryContainsPointVisitor extends ShortCircuitedGeometryVisitor
 
   protected boolean isDone()
   {
-    return containsPoint == true;
+    return containsPoint;
   }
 }
 
@@ -266,8 +266,6 @@ class RectangleIntersectsSegmentVisitor extends ShortCircuitedGeometryVisitor
   private RectangleLineIntersector rectIntersector;
 
   private boolean hasIntersection = false;
-  private Coordinate p0 = new Coordinate();
-  private Coordinate p1 = new Coordinate();
 
   /**
    * Creates a visitor for checking rectangle intersection
@@ -323,6 +321,8 @@ class RectangleIntersectsSegmentVisitor extends ShortCircuitedGeometryVisitor
   private void checkIntersectionWithSegments(LineString testLine)
   {
     CoordinateSequence seq1 = testLine.getCoordinateSequence();
+    Coordinate p0 = seq1.createCoordinate();
+    Coordinate p1 = seq1.createCoordinate();
     for (int j = 1; j < seq1.size(); j++) {
       seq1.getCoordinate(j - 1, p0);
       seq1.getCoordinate(j,     p1);
@@ -336,6 +336,6 @@ class RectangleIntersectsSegmentVisitor extends ShortCircuitedGeometryVisitor
 
   protected boolean isDone()
   {
-    return hasIntersection == true;
+    return hasIntersection;
   }
 }

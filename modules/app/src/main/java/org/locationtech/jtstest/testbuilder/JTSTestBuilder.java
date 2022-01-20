@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -19,12 +19,12 @@ import javax.swing.UIManager;
 
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.PrecisionModel;
+import org.locationtech.jtstest.cmd.CommandOptions;
 import org.locationtech.jtstest.command.CommandLine;
 import org.locationtech.jtstest.command.Option;
 import org.locationtech.jtstest.command.OptionSpec;
 import org.locationtech.jtstest.command.ParseException;
 import org.locationtech.jtstest.geomfunction.GeometryFunctionRegistry;
-import org.locationtech.jtstest.testbuilder.cmd.CommandOptions;
 import org.locationtech.jtstest.testbuilder.controller.JTSTestBuilderController;
 import org.locationtech.jtstest.testbuilder.model.TestBuilderModel;
 
@@ -56,6 +56,9 @@ public class JTSTestBuilder
   public static JTSTestBuilderController controller() {
     return CONTROLLER;
   }
+  public static JTSTestBuilderFrame frame() {
+    return JTSTestBuilderFrame.instance();
+  }
   
   public static TestBuilderModel model() { return instance().tbModel; }
 
@@ -75,6 +78,11 @@ public class JTSTestBuilder
   
   public static GeometryFactory getGeometryFactory() 
   { 
+    /**
+     * Allow this to work even if TestBuilder is not initialized
+     */
+    if (instance() == null) 
+      return new GeometryFactory();
     return model().getGeometryFactory();
   }
   

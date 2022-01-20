@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -48,11 +48,11 @@ public class SegmentStringUtil
 
   /**
    * Extracts all linear components from a given {@link Geometry}
-   * to {@link SegmentString}s.
+   * to {@link NodedSegmentString}s.
    * The SegmentString data item is set to be the source Geometry.
    * 
    * @param geom the geometry to extract from
-   * @return a List of SegmentStrings
+   * @return a List of NodedSegmentStrings
    */
   public static List extractNodedSegmentStrings(Geometry geom)
   {
@@ -65,6 +65,27 @@ public class SegmentStringUtil
     }
     return segStr;
   }
+  
+  /**
+   * Extracts all linear components from a given {@link Geometry}
+   * to {@link BasicSegmentString}s.
+   * The SegmentString data item is set to be the source Geometry.
+   * 
+   * @param geom the geometry to extract from
+   * @return a List of BasicSegmentStrings
+   */
+  public static List extractBasicSegmentStrings(Geometry geom)
+  {
+    List segStr = new ArrayList();
+    List lines = LinearComponentExtracter.getLines(geom);
+    for (Iterator i = lines.iterator(); i.hasNext(); ) {
+      LineString line = (LineString) i.next();
+      Coordinate[] pts = line.getCoordinates();
+      segStr.add(new BasicSegmentString(pts, geom));
+    }
+    return segStr;
+  }
+  
 
   /**
    * Converts a collection of {@link SegmentString}s into a {@link Geometry}.

@@ -1,13 +1,10 @@
-
-
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -68,7 +65,9 @@ public class Node
    */
   protected void computeIM(IntersectionMatrix im) {}
   /**
-   * Add the edge to the list of edges at this node
+   * Add the edge to the list of edges at this node.
+   *
+   * @param e EdgeEnd
    */
   public void add(EdgeEnd e)
   {
@@ -87,8 +86,9 @@ public class Node
    * the merged location for each LabelElement is computed.
    * The location for the corresponding node LabelElement is set to the result,
    * as long as the location is non-null.
+   *
+   * @param label2 Label to merge
    */
-
   public void mergeLabel(Label label2)
   {
     for (int i = 0; i < 2; i++) {
@@ -110,6 +110,7 @@ public class Node
   /**
    * Updates the label of a node to BOUNDARY,
    * obeying the mod-2 boundaryDetermination rule.
+   * @param argIndex location index
    */
   public void setLabelBoundary(int argIndex)
   {

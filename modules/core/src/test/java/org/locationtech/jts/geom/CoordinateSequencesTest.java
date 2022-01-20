@@ -1,11 +1,10 @@
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -118,16 +117,16 @@ public class CoordinateSequencesTest extends TestCase {
   }
 
   /**
-   * Method used to create a {@link this.ordinateValues}.
+   * Method used to create a {@link #ordinateValues}.
    * Usage: remove first 't' and run as unit test.
    * Note: When parameters are changed, some unit tests may need to be
    * changed, too. <p>
-   * This is especially true for the (@link testMinCoordinateIndex) test,
+   * This is especially true for the {@link #testMinCoordinateIndex()} test,
    * which assumes that the coordinates in the sequence are all within an
    * envelope of [Env(10, 100, 10, 100)].
    * </p>.
    *
-   * @deprecated only use to update {@link this.ordinateValues}
+   * @deprecated only use to update {@link #ordinateValues}
    */
   public void ttestCreateRandomOrdinates() {
     CoordinateSequence sequence = createRandomTestSequence(CoordinateArraySequenceFactory.instance(), 20,

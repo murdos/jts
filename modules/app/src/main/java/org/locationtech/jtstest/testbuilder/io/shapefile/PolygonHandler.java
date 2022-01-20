@@ -1,23 +1,22 @@
 /*
+ * Copyright (c) 2016 Vivid Solutions.
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 2.0
+ * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
+ * and the Eclipse Distribution License is available at
+ *
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ */
+/*
  * Copyright (c) 2003 Open Source Geospatial Foundation, All rights reserved.
- * 
+ *
  * This program and the accompanying materials are made available under the terms
  * of the OSGeo BSD License v1.0 available at:
  *
  * https://www.osgeo.org/sites/osgeo.org/files/Page/osgeo-bsd-license.txt
  */
-/*
- * Copyright (c) 2016 Vivid Solutions.
- *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at
- *
- * http://www.eclipse.org/org/documents/edl-v10.php.
- */
-
 package org.locationtech.jtstest.testbuilder.io.shapefile;
 
 import java.io.IOException;
@@ -31,7 +30,6 @@ import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
-import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.PrecisionModel;
 
@@ -68,7 +66,7 @@ public class PolygonHandler implements ShapeHandler{
         {
             p = pointList[t];
             if ( (testPoint.x == p.x) && (testPoint.y == p.y) &&
-                    ((testPoint.getZ() == p.getZ()) || (!(testPoint.getZ() == testPoint.getZ()))  )  //nan test; x!=x iff x is nan
+                    ((testPoint.getZ() == p.getZ()) || (!(testPoint.getZ() == testPoint.getZ()))  )  //nan test; x!=x if x is nan
                     )
             {
                 return true;
@@ -194,7 +192,10 @@ public class PolygonHandler implements ShapeHandler{
                 offset++;
             }
             LinearRing ring = geometryFactory.createLinearRing(points);
-            if(Orientation.isCCW(points)){
+            /**
+             * Allow reading a 3-point ring, and treat it as a shell.
+             */
+            if(points.length >= 4 && Orientation.isCCW(points)){
                 holes.add(ring);
             }
             else{

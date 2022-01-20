@@ -1,11 +1,10 @@
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -127,7 +126,7 @@ if (newSize <= oldSize) {
   /**
    * Removes a single item from the tree.
    *
-   * @param itemEnv the Envelope of the item to be removed
+   * @param itemInterval the interval of the item to be removed
    * @param item the item to remove
    * @return <code>true</code> if the item was found (and thus removed)
    */
@@ -173,7 +172,7 @@ if (newSize <= oldSize) {
    * If the query interval is <tt>null</tt>, add all items in the tree.
    * 
    * @param interval a query interval, or null
-   * @param resultItems the candidate items found
+   * @param foundItems the candidate items found
    */
   public void query(Interval interval, Collection foundItems)
   {

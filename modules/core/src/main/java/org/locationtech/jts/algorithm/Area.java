@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -58,7 +58,7 @@ public class Area {
     if (ring.length < 3)
       return 0.0;
     double sum = 0.0;
-    /**
+    /*
      * Based on the Shoelace formula.
      * http://en.wikipedia.org/wiki/Shoelace_formula
      */
@@ -89,13 +89,13 @@ public class Area {
     int n = ring.size();
     if (n < 3)
       return 0.0;
-    /**
+    /*
      * Based on the Shoelace formula.
      * http://en.wikipedia.org/wiki/Shoelace_formula
      */
-    Coordinate p0 = new Coordinate();
-    Coordinate p1 = new Coordinate();
-    Coordinate p2 = new Coordinate();
+    Coordinate p0 = ring.createCoordinate();
+    Coordinate p1 = ring.createCoordinate();
+    Coordinate p2 = ring.createCoordinate();
     ring.getCoordinate(0, p1);
     ring.getCoordinate(1, p2);
     double x0 = p1.x;

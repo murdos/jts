@@ -1,13 +1,10 @@
-
-
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -20,6 +17,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.locationtech.jts.geom.Location;
+import org.locationtech.jts.geom.Position;
+import org.locationtech.jts.geom.Quadrant;
 import org.locationtech.jts.geom.TopologyException;
 import org.locationtech.jts.util.Assert;
 
@@ -139,7 +138,9 @@ public class DirectedEdgeStar
   }
 
   /**
-   * Update incomplete dirEdge labels from the labelling for the node
+   * Update incomplete dirEdge labels from the labelling for the node.
+   *
+   * @param nodeLabel Label to apply
    */
   public void updateLabelling(Label nodeLabel)
   {
@@ -164,8 +165,8 @@ public class DirectedEdgeStar
     return resultAreaEdgeList;
   }
 
-  private final int SCANNING_FOR_INCOMING = 1;
-  private final int LINKING_TO_OUTGOING = 2;
+  private static final int SCANNING_FOR_INCOMING = 1;
+  private static final int LINKING_TO_OUTGOING = 2;
   /**
    * Traverse the star of DirectedEdges, linking the included edges together.
    * To link two dirEdges, the <code>next</code> pointer for an incoming dirEdge

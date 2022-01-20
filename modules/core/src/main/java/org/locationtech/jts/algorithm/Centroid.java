@@ -1,11 +1,10 @@
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -21,31 +20,32 @@ import org.locationtech.jts.geom.Polygon;
 
 /**
  * Computes the centroid of a {@link Geometry} of any dimension.
- * If the geometry is nominally of higher dimension, 
- * but has lower <i>effective</i> dimension 
- * (i.e. contains only components
- * having zero length or area), 
- * the centroid will be computed as for the equivalent lower-dimension geometry.
- * If the input geometry is empty, a
- * <code>null</code> Coordinate is returned.
+ * For collections the centroid is computed for the collection of 
+ * non-empty elements of highest dimension. 
+ * The centroid of an empty geometry is {@code null}.
  * 
- * <h2>Algorithm</h2>
+ * <h3>Algorithm</h3>
+ *
  * <ul>
  * <li><b>Dimension 2</b> - the centroid is computed 
  * as the weighted sum of the centroids
  * of a decomposition of the area into (possibly overlapping) triangles.
  * Holes and multipolygons are handled correctly.
- * See <code>http://www.faqs.org/faqs/graphics/algorithms-faq/</code>
+ * See http://www.faqs.org/faqs/graphics/algorithms-faq/
  * for further details of the basic approach.
  * 
  * <li><b>Dimension 1</b> - Computes the average of the midpoints
  * of all line segments weighted by the segment length.
  * Zero-length lines are treated as points.
  * 
- * <li><b>Dimension 0</b> - Compute the average coordinate for all points.
+ * <li><b>Dimension 0</b> - Compute the average coordinate over all points.
  * Repeated points are all included in the average.
  * </ul>
  * 
+ * @see InteriorPoint
+ * @see org.locationtech.jts.algorithm.construct.MaximumInscribedCircle
+ * @see org.locationtech.jts.algorithm.construct.LargestEmptyCircle
+ *  
  * @version 1.7
  */
 public class Centroid
@@ -117,7 +117,7 @@ public class Centroid
    */
   public Coordinate getCentroid()
   {
-    /**
+    /*
      * The centroid is computed from the highest dimension components present in the input.
      * I.e. areas dominate lineal geometry, which dominates points.
      * Degenerate geometry are computed using their effective dimension
@@ -125,21 +125,21 @@ public class Centroid
      */
     Coordinate cent = new Coordinate();
     if (Math.abs(areasum2) > 0.0) {
-      /**
+      /*
        * Input contains areal geometry
        */
     	cent.x = cg3.x / 3 / areasum2;
     	cent.y = cg3.y / 3 / areasum2;
     }
     else if (totalLength > 0.0) {
-      /**
+      /*
        * Input contains lineal geometry
        */
       cent.x = lineCentSum.x / totalLength;
       cent.y = lineCentSum.y / totalLength;   	
     }
     else if (ptCount > 0){
-      /**
+      /*
        * Input contains puntal geometry only
        */
       cent.x = ptCentSum.x / ptCount;

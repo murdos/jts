@@ -2,9 +2,9 @@
  * Copyright (c) 2018 Vivid Solutions
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -36,7 +36,7 @@ public class CoordinateXYM extends Coordinate {
    * Standard ordinate index value for M in XYM sequences.
    *
    * <p>This constant assumes XYM coordinate sequence definition.  Check this assumption using
-   * {@link #getDimension()} and {@link #getMeasures()} before use.
+   * {@link CoordinateSequence#getDimension()} and {@link CoordinateSequence#getMeasures()} before use.
    */
   public static final int M = 2;
 
@@ -85,6 +85,16 @@ public class CoordinateXYM extends Coordinate {
    */
   public CoordinateXYM copy() {
     return new CoordinateXYM(this);
+  }
+  
+  /**
+   * Create a new Coordinate of the same type as this Coordinate, but with no values.
+   * 
+   * @return a new Coordinate
+   */
+  @Override
+  public Coordinate create() {
+      return new CoordinateXYM();
   }
     
   /** The m-measure. */

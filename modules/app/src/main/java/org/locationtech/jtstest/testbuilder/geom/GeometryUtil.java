@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -20,16 +20,18 @@ public class GeometryUtil {
   public static String structureSummary(Geometry g)
   {
     String structure = "";
+    if (g == null) return "";
     if (g instanceof Polygon) {
-      structure = ((Polygon) g).getNumInteriorRing() + " holes" ;
+      int nHoles = ((Polygon) g).getNumInteriorRing();
+      if (nHoles > 0) structure = nHoles + (nHoles > 1 ? " holes, " : " hole, ");
     }
-    else if (g instanceof GeometryCollection)
-      structure = g.getNumGeometries() + " elements";
+    String size = "";
+    if (g instanceof GeometryCollection)
+      size = " [ " + g.getNumGeometries() + " ]";
 
     return
     g.getGeometryType().toUpperCase() 
-    +  " - " + structure
-    + (structure.length() > 0 ? ", " : "")
+    +  size + " - " + structure
     + g.getNumPoints() + " pts";
   }
 
@@ -61,6 +63,25 @@ public class GeometryUtil {
       area = Area.ofRing(geom.getCoordinates());
     }
     return area;
+  }
+
+  /**
+   * Gets the envelope including all holes which might lie outside a polygon.
+   * 
+   * @param geom
+   * @return
+   */
+  public static Envelope totalEnvelope(Geometry geom) {
+    Envelope env = geom.getEnvelopeInternal();
+    geom.apply(new GeometryComponentFilter() {
+  
+      @Override
+      public void filter(Geometry comp) {
+        env.expandToInclude(comp.getEnvelopeInternal());
+      }
+      
+    });
+    return env;
   }
 
 }

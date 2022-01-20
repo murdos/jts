@@ -1,12 +1,10 @@
-
-
 /*
- * Copyright (c) 2016 Vivid Solutions.
+ * Copyright (c) 2016 Vivid Solutions, and others.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -73,7 +71,9 @@ public class RobustLineIntersector
     if ((Qp1>0 && Qp2>0) || (Qp1<0 && Qp2<0)) {
         return NO_INTERSECTION;
     }
-
+    /**
+     * Intersection is collinear if each endpoint lies on the other line.
+     */
     boolean collinear = Pq1 == 0
          && Pq2 == 0
          && Qp1 == 0
@@ -95,6 +95,8 @@ public class RobustLineIntersector
      *  the other line, since at this point we know that the inputLines must
      *  intersect.
      */
+    Coordinate p = null;
+    double z = Double.NaN;
     if (Pq1 == 0 || Pq2 == 0 || Qp1 == 0 || Qp2 == 0) {
       isProper = false;
       
@@ -114,78 +116,111 @@ public class RobustLineIntersector
        * which used to produce the INCORRECT result: (20.31970698357233, 46.76654261437082, NaN)
        * 
        */
-      if (p1.equals2D(q1) 
-      		|| p1.equals2D(q2)) {
-      	intPt[0] = p1;
+      if (p1.equals2D(q1)) {
+        p = p1;
+        z = zGet(p1, q1);
       }
-      else if (p2.equals2D(q1) 
-      		|| p2.equals2D(q2)) {
-      	intPt[0] = p2;
+      else if (p1.equals2D(q2)) {
+        p = p1;
+        z = zGet(p1, q2);
       }
-      
+      else if (p2.equals2D(q1)) {
+        p = p2;
+        z = zGet(p2, q1);        
+      }
+      else if (p2.equals2D(q2)) {
+        p = p2;
+        z = zGet(p2, q2); 
+      }
       /**
        * Now check to see if any endpoint lies on the interior of the other segment.
        */
       else if (Pq1 == 0) {
-        intPt[0] = new Coordinate(q1);
+        p = q1;
+        z = zGetOrInterpolate(q1, p1, p2);
       }
       else if (Pq2 == 0) {
-        intPt[0] = new Coordinate(q2);
+        p = q2;
+        z = zGetOrInterpolate(q2, p1, p2);
       }
       else if (Qp1 == 0) {
-        intPt[0] = new Coordinate(p1);
+        p = p1;
+        z = zGetOrInterpolate(p1, q1, q2);
       }
       else if (Qp2 == 0) {
-        intPt[0] = new Coordinate(p2);
+        p = p2;
+        z = zGetOrInterpolate(p2, q1, q2);
       }
     }
     else {
       isProper = true;
-      intPt[0] = intersection(p1, p2, q1, q2);
+      p = intersection(p1, p2, q1, q2);
+      z = zInterpolate(p, p1, p2, q1, q2);
     }
+    intPt[0] = copyWithZ(p, z);
     return POINT_INTERSECTION;
   }
 
   private int computeCollinearIntersection(Coordinate p1, Coordinate p2,
       Coordinate q1, Coordinate q2) {
-    boolean p1q1p2 = Envelope.intersects(p1, p2, q1);
-    boolean p1q2p2 = Envelope.intersects(p1, p2, q2);
-    boolean q1p1q2 = Envelope.intersects(q1, q2, p1);
-    boolean q1p2q2 = Envelope.intersects(q1, q2, p2);
+    boolean q1inP = Envelope.intersects(p1, p2, q1);
+    boolean q2inP = Envelope.intersects(p1, p2, q2);
+    boolean p1inQ = Envelope.intersects(q1, q2, p1);
+    boolean p2inQ = Envelope.intersects(q1, q2, p2);
 
-    if (p1q1p2 && p1q2p2) {
-      intPt[0] = q1;
-      intPt[1] = q2;
+    if (q1inP && q2inP) {
+      intPt[0] = copyWithZInterpolate(q1, p1, p2);
+      intPt[1] = copyWithZInterpolate(q2, p1, p2);
       return COLLINEAR_INTERSECTION;
     }
-    if (q1p1q2 && q1p2q2) {
-      intPt[0] = p1;
-      intPt[1] = p2;
+    if (p1inQ && p2inQ) {
+      intPt[0] = copyWithZInterpolate(p1, q1, q2);
+      intPt[1] = copyWithZInterpolate(p2, q1, q2);
       return COLLINEAR_INTERSECTION;
     }
-    if (p1q1p2 && q1p1q2) {
-      intPt[0] = q1;
-      intPt[1] = p1;
-      return q1.equals(p1) && !p1q2p2 && !q1p2q2 ? POINT_INTERSECTION : COLLINEAR_INTERSECTION;
+    if (q1inP && p1inQ) {
+      // if pts are equal Z is chosen arbitrarily
+      intPt[0] = copyWithZInterpolate(q1, p1, p2);
+      intPt[1] = copyWithZInterpolate(p1, q1, q2);
+      return q1.equals(p1) && !q2inP && !p2inQ ? POINT_INTERSECTION : COLLINEAR_INTERSECTION;
     }
-    if (p1q1p2 && q1p2q2) {
-      intPt[0] = q1;
-      intPt[1] = p2;
-      return q1.equals(p2) && !p1q2p2 && !q1p1q2 ? POINT_INTERSECTION : COLLINEAR_INTERSECTION;
+    if (q1inP && p2inQ) {
+      // if pts are equal Z is chosen arbitrarily
+      intPt[0] = copyWithZInterpolate(q1, p1, p2);
+      intPt[1] = copyWithZInterpolate(p2, q1, q2);
+      return q1.equals(p2) && !q2inP && !p1inQ ? POINT_INTERSECTION : COLLINEAR_INTERSECTION;
     }
-    if (p1q2p2 && q1p1q2) {
-      intPt[0] = q2;
-      intPt[1] = p1;
-      return q2.equals(p1) && !p1q1p2 && !q1p2q2 ? POINT_INTERSECTION : COLLINEAR_INTERSECTION;
+    if (q2inP && p1inQ) {
+      // if pts are equal Z is chosen arbitrarily
+      intPt[0] = copyWithZInterpolate(q2, p1, p2);
+      intPt[1] = copyWithZInterpolate(p1, q1, q2);
+      return q2.equals(p1) && !q1inP && !p2inQ ? POINT_INTERSECTION : COLLINEAR_INTERSECTION;
     }
-    if (p1q2p2 && q1p2q2) {
-      intPt[0] = q2;
-      intPt[1] = p2;
-      return q2.equals(p2) && !p1q1p2 && !q1p1q2 ? POINT_INTERSECTION : COLLINEAR_INTERSECTION;
+    if (q2inP && p2inQ) {
+      // if pts are equal Z is chosen arbitrarily
+      intPt[0] = copyWithZInterpolate(q2, p1, p2);
+      intPt[1] = copyWithZInterpolate(p2, q1, q2);
+      return q2.equals(p2) && !q1inP && !p1inQ ? POINT_INTERSECTION : COLLINEAR_INTERSECTION;
     }
     return NO_INTERSECTION;
   }
 
+  private static Coordinate copyWithZInterpolate(Coordinate p, Coordinate p1, Coordinate p2) {
+    return copyWithZ(p, zGetOrInterpolate(p, p1, p2));
+  }
+
+  private static Coordinate copyWithZ(Coordinate p, double z) {
+    Coordinate pCopy = copy(p);
+    if (! Double.isNaN(z)) {
+      pCopy.setZ( z );
+    }
+    return pCopy;    
+  }
+  
+  private static Coordinate copy(Coordinate p) {
+    return new Coordinate(p);    
+  }
+  
   /**
    * This method computes the actual value of the intersection point.
    * To obtain the maximum precision from the intersection calculation,
@@ -197,7 +232,7 @@ public class RobustLineIntersector
   private Coordinate intersection(
     Coordinate p1, Coordinate p2, Coordinate q1, Coordinate q2)
   {
-    Coordinate intPt = intersectionWithNormalization(p1, p2, q1, q2);
+    Coordinate intPt = intersectionSafe(p1, p2, q1, q2);
     
     /*
     // TESTING ONLY
@@ -226,7 +261,7 @@ public class RobustLineIntersector
       
       // compute a safer result
       // copy the coordinate, since it may be rounded later
-      intPt = new Coordinate(nearestEndpoint(p1, p2, q1, q2));
+      intPt = copy(nearestEndpoint(p1, p2, q1, q2));
 //    intPt = CentralEndpointIntersector.getIntersection(p1, p2, q1, q2);
       
 //      System.out.println("Segments: " + this);
@@ -249,24 +284,6 @@ public class RobustLineIntersector
       System.out.println("Distance = " + intPt.distance(intPtDD));
     }
   }
-
-  private Coordinate intersectionWithNormalization(
-    Coordinate p1, Coordinate p2, Coordinate q1, Coordinate q2)
-    {
-      Coordinate n1 = new Coordinate(p1);
-      Coordinate n2 = new Coordinate(p2);
-      Coordinate n3 = new Coordinate(q1);
-      Coordinate n4 = new Coordinate(q2);
-      Coordinate normPt = new Coordinate();
-      normalizeToEnvCentre(n1, n2, n3, n4, normPt);
-
-      Coordinate intPt = safeHCoordinateIntersection(n1, n2, n3, n4);
-
-      intPt.x += normPt.x;
-      intPt.y += normPt.y;
-      
-      return intPt;
-  }
   
   /**
    * Computes a segment intersection using homogeneous coordinates.
@@ -280,120 +297,13 @@ public class RobustLineIntersector
    * @param q2 a segment endpoint
    * @return the computed intersection point
    */
-  private Coordinate safeHCoordinateIntersection(Coordinate p1, Coordinate p2, Coordinate q1, Coordinate q2)
+  private Coordinate intersectionSafe(Coordinate p1, Coordinate p2, Coordinate q1, Coordinate q2)
   {
-    Coordinate intPt = null;
-    try {
-      intPt = HCoordinate.intersection(p1, p2, q1, q2);
-    }
-    catch (NotRepresentableException e) {
-//    	System.out.println("Not calculable: " + this);
-      // compute an approximate result
-//      intPt = CentralEndpointIntersector.getIntersection(p1, p2, q1, q2);
+    Coordinate intPt = Intersection.intersection(p1, p2, q1, q2);
+    if (intPt == null)
       intPt = nearestEndpoint(p1, p2, q1, q2);
  //     System.out.println("Snapped to " + intPt);
-    }
     return intPt;
-  }
-
-  /**
-   * Normalize the supplied coordinates so that
-   * their minimum ordinate values lie at the origin.
-   * NOTE: this normalization technique appears to cause
-   * large errors in the position of the intersection point for some cases.
-   *
-   * @param n1
-   * @param n2
-   * @param n3
-   * @param n4
-   * @param normPt
-   */
-  private void normalizeToMinimum(
-    Coordinate n1,
-    Coordinate n2,
-    Coordinate n3,
-    Coordinate n4,
-    Coordinate normPt)
-  {
-    normPt.x = smallestInAbsValue(n1.x, n2.x, n3.x, n4.x);
-    normPt.y = smallestInAbsValue(n1.y, n2.y, n3.y, n4.y);
-    n1.x -= normPt.x;    n1.y -= normPt.y;
-    n2.x -= normPt.x;    n2.y -= normPt.y;
-    n3.x -= normPt.x;    n3.y -= normPt.y;
-    n4.x -= normPt.x;    n4.y -= normPt.y;
-  }
-
-  /**
-   * Normalize the supplied coordinates to
-   * so that the midpoint of their intersection envelope
-   * lies at the origin.
-   *
-   * @param n00
-   * @param n01
-   * @param n10
-   * @param n11
-   * @param normPt
-   */
-  private void normalizeToEnvCentre(
-    Coordinate n00,
-    Coordinate n01,
-    Coordinate n10,
-    Coordinate n11,
-    Coordinate normPt)
-  {
-    double minX0 = n00.x < n01.x ? n00.x : n01.x;
-    double minY0 = n00.y < n01.y ? n00.y : n01.y;
-    double maxX0 = n00.x > n01.x ? n00.x : n01.x;
-    double maxY0 = n00.y > n01.y ? n00.y : n01.y;
-
-    double minX1 = n10.x < n11.x ? n10.x : n11.x;
-    double minY1 = n10.y < n11.y ? n10.y : n11.y;
-    double maxX1 = n10.x > n11.x ? n10.x : n11.x;
-    double maxY1 = n10.y > n11.y ? n10.y : n11.y;
-
-    double intMinX = minX0 > minX1 ? minX0 : minX1;
-    double intMaxX = maxX0 < maxX1 ? maxX0 : maxX1;
-    double intMinY = minY0 > minY1 ? minY0 : minY1;
-    double intMaxY = maxY0 < maxY1 ? maxY0 : maxY1;
-
-    double intMidX = (intMinX + intMaxX) / 2.0;
-    double intMidY = (intMinY + intMaxY) / 2.0;
-    normPt.x = intMidX;
-    normPt.y = intMidY;
-
-    /*
-    // equilavalent code using more modular but slower method
-    Envelope env0 = new Envelope(n00, n01);
-    Envelope env1 = new Envelope(n10, n11);
-    Envelope intEnv = env0.intersection(env1);
-    Coordinate intMidPt = intEnv.centre();
-
-    normPt.x = intMidPt.x;
-    normPt.y = intMidPt.y;
-    */
-
-    n00.x -= normPt.x;    n00.y -= normPt.y;
-    n01.x -= normPt.x;    n01.y -= normPt.y;
-    n10.x -= normPt.x;    n10.y -= normPt.y;
-    n11.x -= normPt.x;    n11.y -= normPt.y;
-  }
-
-  private double smallestInAbsValue(double x1, double x2, double x3, double x4)
-  {
-    double x = x1;
-    double xabs = Math.abs(x);
-    if (Math.abs(x2) < xabs) {
-      x = x2;
-      xabs = Math.abs(x2);
-    }
-    if (Math.abs(x3) < xabs) {
-      x = x3;
-      xabs = Math.abs(x3);
-    }
-    if (Math.abs(x4) < xabs) {
-      x = x4;
-    }
-    return x;
   }
 
   /**
@@ -455,5 +365,111 @@ public class RobustLineIntersector
     return nearestPt;
   }
 
+  /**
+   * Gets the Z value of the first argument if present, 
+   * otherwise the value of the second argument.
+   * 
+   * @param p a coordinate, possibly with Z
+   * @param q a coordinate, possibly with Z
+   * @return the Z value if present
+   */
+  private static double zGet(Coordinate p, Coordinate q) {
+    double z = p.getZ();
+    if (Double.isNaN(z)) {
+      z = q.getZ(); // may be NaN
+    }
+    return z;
+  }
+  
+  /**
+   * Gets the Z value of a coordinate if present, or
+   * interpolates it from the segment it lies on.
+   * If the segment Z values are not fully populate
+   * NaN is returned.
+   * 
+   * @param p a coordinate, possibly with Z 
+   * @param p1 a segment endpoint, possibly with Z
+   * @param p2 a segment endpoint, possibly with Z
+   * @return the extracted or interpolated Z value (may be NaN)
+   */
+  private static double zGetOrInterpolate(Coordinate p, Coordinate p1, Coordinate p2) {
+    double z = p.getZ();
+    if (! Double.isNaN(z)) 
+      return z;
+    return zInterpolate(p, p1, p2); // may be NaN
+  }
+
+  /**
+   * Interpolates a Z value for a point along 
+   * a line segment between two points.
+   * The Z value of the interpolation point (if any) is ignored.
+   * If either segment point is missing Z, 
+   * returns NaN.
+   * 
+   * @param p a coordinate
+   * @param p1 a segment endpoint, possibly with Z
+   * @param p2 a segment endpoint, possibly with Z
+   * @return the interpolated Z value (may be NaN)
+   */
+  private static double zInterpolate(Coordinate p, Coordinate p1, Coordinate p2) {
+    double p1z = p1.getZ();
+    double p2z = p2.getZ();
+    if (Double.isNaN(p1z)) {
+      return p2z; // may be NaN
+    }
+    if (Double.isNaN(p2z)) {
+      return p1z; // may be NaN
+    }
+    if (p.equals2D(p1)) {
+      return p1z; // not NaN
+    }
+    if (p.equals2D(p2)) {
+      return p2z; // not NaN
+    }
+    double dz = p2z - p1z;
+    if (dz == 0.0) {
+      return p1z;
+    }
+    // interpolate Z from distance of p along p1-p2
+    double dx = (p2.x - p1.x);
+    double dy = (p2.y - p1.y);
+    // seg has non-zero length since p1 < p < p2 
+    double seglen = (dx * dx + dy * dy); 
+    double xoff = (p.x - p1.x);
+    double yoff = (p.y - p1.y);
+    double plen = (xoff * xoff + yoff * yoff);
+    double frac = Math.sqrt(plen / seglen);
+    double zoff = dz * frac;
+    double zInterpolated = p1z + zoff;
+    return zInterpolated;
+  }
+
+  /**
+   * Interpolates a Z value for a point along 
+   * two line segments and computes their average.
+   * The Z value of the interpolation point (if any) is ignored.
+   * If one segment point is missing Z that segment is ignored
+   * if both segments are missing Z, returns NaN.
+   * 
+   * @param p a coordinate
+   * @param p1 a segment endpoint, possibly with Z
+   * @param p2 a segment endpoint, possibly with Z
+   * @param q1 a segment endpoint, possibly with Z
+   * @param q2 a segment endpoint, possibly with Z
+   * @return the averaged interpolated Z value (may be NaN)
+   */
+  private static double zInterpolate(Coordinate p, Coordinate p1, Coordinate p2, Coordinate q1, Coordinate q2) {
+    double zp = zInterpolate(p, p1, p2);
+    double zq = zInterpolate(p, q1, q2);
+    if (Double.isNaN(zp)) {
+      return zq; // may be NaN
+    }
+    if (Double.isNaN(zq)) {
+      return zp; // may be NaN
+    }
+    // both Zs have values, so average them
+    return (zp + zq) / 2.0;
+  }
+  
 
 }

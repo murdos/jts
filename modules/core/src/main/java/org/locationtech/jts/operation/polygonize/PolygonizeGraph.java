@@ -1,17 +1,14 @@
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
  */
-
-
 package org.locationtech.jts.operation.polygonize;
 
 import java.util.ArrayList;
@@ -36,7 +33,7 @@ import org.locationtech.jts.util.Assert;
 /**
  * Represents a planar graph of edges that can be used to compute a
  * polygonization, and implements the algorithms to compute the
- * {@link EdgeRings} formed by the graph.
+ * {@link EdgeRing}s formed by the graph.
  * <p>
  * The marked flag on {@link DirectedEdge}s is used to indicate that a directed edge
  * has be logically deleted from the graph.
@@ -49,9 +46,9 @@ class PolygonizeGraph
 
   private static int getDegreeNonDeleted(Node node)
   {
-    List edges = node.getOutEdges().getEdges();
+    List<DirectedEdge> edges = node.getOutEdges().getEdges();
     int degree = 0;
-    for (Iterator i = edges.iterator(); i.hasNext(); ) {
+    for (Iterator<DirectedEdge> i = edges.iterator(); i.hasNext(); ) {
       PolygonizeDirectedEdge de = (PolygonizeDirectedEdge) i.next();
       if (! de.isMarked()) degree++;
     }
@@ -60,9 +57,9 @@ class PolygonizeGraph
 
   private static int getDegree(Node node, long label)
   {
-    List edges = node.getOutEdges().getEdges();
+    List<DirectedEdge> edges = node.getOutEdges().getEdges();
     int degree = 0;
-    for (Iterator i = edges.iterator(); i.hasNext(); ) {
+    for (Iterator<DirectedEdge> i = edges.iterator(); i.hasNext(); ) {
       PolygonizeDirectedEdge de = (PolygonizeDirectedEdge) i.next();
       if (de.getLabel() == label) degree++;
     }
@@ -74,8 +71,8 @@ class PolygonizeGraph
    */
   public static void deleteAllEdges(Node node)
   {
-    List edges = node.getOutEdges().getEdges();
-    for (Iterator i = edges.iterator(); i.hasNext(); ) {
+    List<DirectedEdge> edges = node.getOutEdges().getEdges();
+    for (Iterator<DirectedEdge> i = edges.iterator(); i.hasNext(); ) {
       PolygonizeDirectedEdge de = (PolygonizeDirectedEdge) i.next();
       de.setMarked(true);
       PolygonizeDirectedEdge sym = (PolygonizeDirectedEdge) de.getSym();

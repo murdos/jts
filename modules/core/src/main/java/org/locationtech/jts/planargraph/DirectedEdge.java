@@ -1,11 +1,10 @@
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -20,7 +19,7 @@ import java.util.List;
 
 import org.locationtech.jts.algorithm.Orientation;
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geomgraph.Quadrant;
+import org.locationtech.jts.geom.Quadrant;
 
 /**
  * Represents a directed edge in a {@link PlanarGraph}. A DirectedEdge may or
@@ -164,7 +163,7 @@ public class DirectedEdge
    * <li>first compare the quadrants. If the quadrants are different, it it
    * trivial to determine which vector is "greater".
    * <li>if the vectors lie in the same quadrant, the robust
-   * {@link Orientation#computeOrientation(Coordinate, Coordinate, Coordinate)}
+   * {@link Orientation#index(Coordinate, Coordinate, Coordinate)}
    * function can be used to decide the relative orientation of the vectors.
    * </ul>
    */
@@ -185,7 +184,7 @@ public class DirectedEdge
    * <li>first compare the quadrants. If the quadrants are different, it it
    * trivial to determine which vector is "greater".
    * <li>if the vectors lie in the same quadrant, the robust
-   * {@link Orientation#computeOrientation(Coordinate, Coordinate, Coordinate)}
+   * {@link Orientation#index(Coordinate, Coordinate, Coordinate)}
    * function can be used to decide the relative orientation of the vectors.
    * </ul>
    */

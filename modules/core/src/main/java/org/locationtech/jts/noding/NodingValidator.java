@@ -1,11 +1,10 @@
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -19,7 +18,6 @@ import org.locationtech.jts.algorithm.LineIntersector;
 import org.locationtech.jts.algorithm.RobustLineIntersector;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.util.Debug;
 
 /**
  * Validates that a collection of {@link SegmentString}s is correctly noded.
@@ -104,10 +102,10 @@ public class NodingValidator {
   {
     if (e0 == e1 && segIndex0 == segIndex1) return;
 //numTests++;
-    Coordinate p00 = e0.getCoordinates()[segIndex0];
-    Coordinate p01 = e0.getCoordinates()[segIndex0 + 1];
-    Coordinate p10 = e1.getCoordinates()[segIndex1];
-    Coordinate p11 = e1.getCoordinates()[segIndex1 + 1];
+    Coordinate p00 = e0.getCoordinate(segIndex0);
+    Coordinate p01 = e0.getCoordinate(segIndex0 + 1);
+    Coordinate p10 = e1.getCoordinate(segIndex1);
+    Coordinate p11 = e1.getCoordinate(segIndex1 + 1);
 
     li.computeIntersection(p00, p01, p10, p11);
     if (li.hasIntersection()) {

@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -14,7 +14,6 @@ package org.locationtech.jts.algorithm;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateArrays;
-import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Triangle;
@@ -161,11 +160,15 @@ public class MinimumBoundingCircle
    */
   private static Coordinate[] farthestPoints(Coordinate[] pts) {
     double dist01 = pts[0].distance(pts[1]);
-    double dist12 = pts[0].distance(pts[1]);
-    if (dist12 > dist01) {
+    double dist12 = pts[1].distance(pts[2]);
+    double dist20 = pts[2].distance(pts[0]);
+    if (dist01 >= dist12 && dist01 >= dist20) {
       return new Coordinate[] { pts[0], pts[1] };
     }
-    return new Coordinate[] { pts[1], pts[2] };
+    if (dist12 >= dist01 && dist12 >= dist20) {
+      return new Coordinate[] { pts[1], pts[2] };
+    }
+    return new Coordinate[] { pts[2], pts[0] };
   }
 
   /**
@@ -315,24 +318,26 @@ public class MinimumBoundingCircle
 		for (int i = 0; i < pts.length; i++) {
 			Coordinate R = pointWithMinAngleWithSegment(pts, P, Q);
 			
-			// if PRQ is obtuse, then MBC is determined by P and Q
 			if (Angle.isObtuse(P, R, Q)) {
+				// if PRQ is obtuse, then MBC is determined by P and Q
 				extremalPts = new Coordinate[] { new Coordinate(P), new Coordinate(Q) };
 				return;
 			}
-			// if RPQ is obtuse, update baseline and iterate
-			if (Angle.isObtuse(R, P, Q)) {
+			else if (Angle.isObtuse(R, P, Q)) {
+				// if RPQ is obtuse, update baseline and iterate
 				P = R;
 				continue;
 			}
-			// if RQP is obtuse, update baseline and iterate
-			if (Angle.isObtuse(R, Q, P)) {
+			else if (Angle.isObtuse(R, Q, P)) {
+				// if RQP is obtuse, update baseline and iterate
 				Q = R;
 				continue;
 			}
-			// otherwise all angles are acute, and the MBC is determined by the triangle PQR
-			extremalPts = new Coordinate[] { new Coordinate(P), new Coordinate(Q), new Coordinate(R) };
-			return;
+			else {
+				// otherwise all angles are acute, and the MBC is determined by the triangle PQR
+				extremalPts = new Coordinate[] { new Coordinate(P), new Coordinate(Q), new Coordinate(R) };
+				return;
+			}
 		}
 		Assert.shouldNeverReachHere("Logic failure in Minimum Bounding Circle algorithm!"); 
 	}

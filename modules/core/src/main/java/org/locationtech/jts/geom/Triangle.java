@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -26,19 +26,16 @@ public class Triangle
 {
 
   /**
-   * Tests whether a triangle is acute. A triangle is acute iff all interior
+   * Tests whether a triangle is acute. A triangle is acute if all interior
    * angles are acute. This is a strict test - right triangles will return
-   * <tt>false</tt> A triangle which is not acute is either right or obtuse.
+   * <tt>false</tt>. A triangle which is not acute is either right or obtuse.
    * <p>
    * Note: this implementation is not robust for angles very close to 90
    * degrees.
    * 
-   * @param a
-   *          a vertex of the triangle
-   * @param b
-   *          a vertex of the triangle
-   * @param c
-   *          a vertex of the triangle
+   * @param a a vertex of the triangle
+   * @param b a vertex of the triangle
+   * @param c a vertex of the triangle
    * @return true if the triangle is acute
    */
   public static boolean isAcute(Coordinate a, Coordinate b, Coordinate c)
@@ -49,6 +46,38 @@ public class Triangle
       return false;
     if (!Angle.isAcute(c, a, b))
       return false;
+    return true;
+  }
+  
+  /**
+   * Tests whether a triangle is oriented counter-clockwise.
+   * 
+   * @param a a vertex of the triangle
+   * @param b a vertex of the triangle
+   * @param c a vertex of the triangle
+   * @return true if the triangle orientation is counter-clockwise
+   */
+  public static boolean isCCW(Coordinate a, Coordinate b, Coordinate c)
+  {
+    return Orientation.COUNTERCLOCKWISE == Orientation.index(a, b, c);
+  }
+  
+  /**
+   * Tests whether a triangle intersects a point.
+   * 
+   * @param a a vertex of the triangle
+   * @param b a vertex of the triangle
+   * @param c a vertex of the triangle
+   * @param p the point to test
+   * @return true if the triangle intersects the point
+   */
+  public static boolean intersects(Coordinate a, Coordinate b, Coordinate c, Coordinate p)
+  {
+    int exteriorIndex = isCCW(a, b, c) ? 
+        Orientation.CLOCKWISE : Orientation.COUNTERCLOCKWISE;
+    if (exteriorIndex == Orientation.index(a, b, p)) return false;
+    if (exteriorIndex == Orientation.index(b, c, p)) return false;
+    if (exteriorIndex == Orientation.index(c, a, p)) return false;
     return true;
   }
 
@@ -262,6 +291,19 @@ public class Triangle
   }
 
   /**
+   * Compute the length of the perimeter of a triangle
+   * 
+   * @param a a vertex of the triangle
+   * @param b a vertex of the triangle
+   * @param c a vertex of the triangle
+   * @return the length of the triangle perimeter
+   */
+  public static double length(Coordinate a, Coordinate b, Coordinate c)
+  {
+    return a.distance(b) + b.distance(c) + c.distance(a);
+  }
+  
+  /**
    * Computes the length of the longest side of a triangle
    * 
    * @param a
@@ -401,7 +443,7 @@ public class Triangle
 
     return area3D;
   }
-
+  
   /**
    * Computes the Z-value (elevation) of an XY point on a three-dimensional
    * plane defined by a triangle whose vertices have Z-values. The defining
@@ -437,8 +479,8 @@ public class Triangle
     double u = (-c * dx + a * dy) / det;
     double z = v0.getZ() + t * (v1.getZ() - v0.getZ()) + u * (v2.getZ() - v0.getZ());
     return z;
-  }
-
+  }  
+  
   /**
    * The coordinates of the vertices of the triangle
    */
@@ -476,9 +518,9 @@ public class Triangle
   }
 
   /**
-   * Tests whether this triangle is acute. A triangle is acute iff all interior
+   * Tests whether this triangle is acute. A triangle is acute if all interior
    * angles are acute. This is a strict test - right triangles will return
-   * <tt>false</tt> A triangle which is not acute is either right or obtuse.
+   * <tt>false</tt>. A triangle which is not acute is either right or obtuse.
    * <p>
    * Note: this implementation is not robust for angles very close to 90
    * degrees.
@@ -487,9 +529,18 @@ public class Triangle
    */
   public boolean isAcute()
   {
-    return isAcute(this.p0, this.p1, this.p2);
+    return isAcute(p0, p1, p2);
   }
 
+  /**
+   * Tests whether this triangle is oriented counter-clockwise.
+   * 
+   * @return true if the triangle orientation is counter-clockwise
+   */
+  public boolean isCCW() {
+    return isCCW(p0, p1, p2);
+  }
+  
   /**
    * Computes the circumcentre of this triangle. The circumcentre is the centre
    * of the circumcircle, the smallest circle which encloses the triangle. It is
@@ -507,7 +558,7 @@ public class Triangle
    */
   public Coordinate circumcentre()
   {
-    return circumcentre(this.p0, this.p1, this.p2);
+    return circumcentre(p0, p1, p2);
   }
 
   /**
@@ -522,9 +573,19 @@ public class Triangle
    */
   public Coordinate centroid()
   {
-    return centroid(this.p0, this.p1, this.p2);
+    return centroid(p0, p1, p2);
   }
 
+  /**
+   * Computes the length of the perimeter of this triangle.
+   * 
+   * @return the length of the perimeter
+   */
+  public double length()
+  {
+    return length(p0, p1, p2);
+  }
+  
   /**
    * Computes the length of the longest side of this triangle
    * 
@@ -532,7 +593,7 @@ public class Triangle
    */
   public double longestSideLength()
   {
-    return longestSideLength(this.p0, this.p1, this.p2);
+    return longestSideLength(p0, p1, p2);
   }
 
   /**
@@ -545,7 +606,7 @@ public class Triangle
    */
   public double area()
   {
-    return area(this.p0, this.p1, this.p2);
+    return area(p0, p1, p2);
   }
 
   /**
@@ -563,7 +624,7 @@ public class Triangle
    */
   public double signedArea()
   {
-    return signedArea(this.p0, this.p1, this.p2);
+    return signedArea(p0, p1, p2);
   }
 
   /**
@@ -574,7 +635,7 @@ public class Triangle
    */
   public double area3D()
   {
-    return area3D(this.p0, this.p1, this.p2);
+    return area3D(p0, p1, p2);
   }
 
   /**

@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -12,6 +12,7 @@
 
 package org.locationtech.jtstest.testbuilder.model;
 
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jtstest.testbuilder.geom.GeometryUtil;
 import org.locationtech.jtstest.testbuilder.ui.style.BasicStyle;
@@ -32,18 +33,28 @@ public class Layer
 
   public Layer(Layer layer) {
     this.name = layer.name + "Copy";
-    this.layerStyle = new LayerStyle(layer.layerStyle);
+    this.layerStyle = layer.layerStyle.copy();
     this.isEnabled = layer.isEnabled;
     this.geomCont = new StaticGeometryContainer(layer.getGeometry());
   }
 
   public String getName() { return name; }
   
+  public void setName(String name) { 
+    this.name = name; 
+  }
+  
   public String getNameInfo() {
     if (geomCont.getGeometry() == null) return getName();
     return getName()
       + "   " + GeometryUtil.structureSummary(geomCont.getGeometry()) 
       + "  --  " + GeometryUtil.metricsSummary(geomCont.getGeometry()); 
+  }
+  
+  public String getNameSummary() {
+    if (geomCont.getGeometry() == null) return getName();
+    return getName()
+      + "   " + GeometryUtil.structureSummary(geomCont.getGeometry()); 
   }
   
   public void setEnabled(boolean isEnabled)
@@ -86,6 +97,11 @@ public class Layer
     return geomCont.getGeometry();
   }
 
+  public Envelope getEnvelope() {
+    if (hasGeometry()) return getGeometry().getEnvelopeInternal();
+    return new Envelope();
+  }
+  
   public boolean hasGeometry() {
     if (geomCont == null) return false;
     return null != geomCont.getGeometry();

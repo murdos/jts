@@ -1,11 +1,10 @@
-
 /*
  * Copyright (c) 2016 Martin Davis.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -14,29 +13,69 @@ package org.locationtech.jts.precision;
 
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Polygonal;
 import org.locationtech.jts.geom.PrecisionModel;
 import org.locationtech.jts.geom.util.GeometryEditor;
 
 /**
  * Reduces the precision of a {@link Geometry}
  * according to the supplied {@link PrecisionModel},
- * ensuring that the result is topologically valid.
+ * ensuring that the result is valid (unless specified otherwise).
+ * <p>
+ * By default the geometry precision model is not changed.
+ * This can be overridden by using {@link #setChangePrecisionModel(boolean)}.
+ *  
+ * <h4>Topological Precision Reduction</h4>
+ * 
+ * The default mode of operation ensures the reduced result is topologically valid
+ * (i.e. {@link Geometry#isValid()} is true).
+ * To ensure this polygonal geometry is reduced in a topologically valid fashion
+ * (technically, by using snap-rounding).
+ * Note that this may change polygonal geometry structure
+ * (e.g. two polygons separated by a distance below the specified precision
+ * will be merged into a single polygon).
+ * Duplicate vertices are removed.
+ * This mode is invoked by the static method {@link #reduce(Geometry, PrecisionModel)}.
+ * <p>
+ * Normally, collapsed linear components (e.g. lines collapsing to a point) 
+ * are not included in the result. 
+ * This behavior can be changed 
+ * by setting {@link #setRemoveCollapsedComponents(boolean)} to <code>false</code>,
+ * or by using the static method {@link #reduceKeepCollapsed(Geometry, PrecisionModel)}.
+ * <p>
+ * In general input must be valid geometry, or an {@link IllegalArgumentException} 
+ * will be thrown. However if the invalidity is "mild" or very small then it
+ * may be eliminated by precision reduction.
+ * 
+ * 
+ * <h4>Pointwise Precision Reduction</h4>
+ * 
+ * Alternatively, geometry can be reduced pointwise by using {@link #setPointwise(boolean)}.
+ * Linear and point geometry are always reduced pointwise (i.e. without further change to 
+ * topology or structure), since this does not change validity.
+ * Invalid inputs are allowed.
+ * Duplicate vertices are preserved.
+ * Collapsed components are always included in the result.
+ * The result geometry may be invalid.
+ * <p>
+ * This mode is invoked by the static method {@link #reducePointwise(Geometry, PrecisionModel)}.
  *
  * @version 1.12
  */
 public class GeometryPrecisionReducer
 {
 	/**
-	 * Convenience method for doing precision reduction 
-   * on a single geometry,
-	 * with collapses removed 
-   * and keeping the geometry precision model the same,
-   * and preserving polygonal topology.
+	 * Reduces precision of a geometry, ensuring output geometry is valid.
+   * Collapsed linear and polygonal components are removed.
+   * Duplicate vertices are removed. 
+   * The geometry precision model is not changed.
+   * <p>
+   * Invalid input geometry may cause an error, 
+   * unless the invalidity is below the scale of the precision reduction.
 	 * 
 	 * @param g the geometry to reduce
 	 * @param precModel the precision model to use
 	 * @return the reduced geometry
+   * @throws IllegalArgumentException if the reduction fails due to invalid input geometry
 	 */
 	public static Geometry reduce(Geometry g, PrecisionModel precModel)
 	{
@@ -44,12 +83,35 @@ public class GeometryPrecisionReducer
 		return reducer.reduce(g);
 	}
 	
+  /**
+   * Reduces precision of a geometry, ensuring output polygonal geometry is valid,
+   * and preserving collapsed linear elements.
+   * Duplicate vertices are removed.
+   * The geometry precision model is not changed.
+   * <p>
+   * Invalid input geometry may cause an error, 
+   * unless the invalidity is below the scale of the precision reduction.
+   * 
+   * @param g the geometry to reduce
+   * @param precModel the precision model to use
+   * @return the reduced geometry
+   * @throws IllegalArgumentException if the reduction fails due to invalid input geometry
+   */
+  public static Geometry reduceKeepCollapsed(Geometry geom, PrecisionModel pm) {
+    GeometryPrecisionReducer reducer = new GeometryPrecisionReducer(pm);
+    reducer.setRemoveCollapsedComponents(false);
+    return reducer.reduce(geom);
+  }
+  
 	/**
-	 * Convenience method for doing pointwise precision reduction 
-   * on a single geometry,
-	 * with collapses removed 
-   * and keeping the geometry precision model the same,
-   * but NOT preserving valid polygonal topology.
+	 * Reduce precision of a geometry in a pointwise way. 
+   * All input geometry elements are preserved in the output, 
+   * including invalid polygons and collapsed polygons and linestrings.
+   * The output may not be valid, due to collapse or self-intersection.
+   * Duplicate vertices are not removed.
+   * The geometry precision model is not changed.
+   * <p>
+   * Invalid input geometry is allowed.
 	 * 
 	 * @param g the geometry to reduce
 	 * @param precModel the precision model to use
@@ -115,68 +177,29 @@ public class GeometryPrecisionReducer
     this.isPointwise = isPointwise;
   }
 
+  /**
+   * Reduces the precision of a geometry, 
+   * according to the specified strategy of this reducer.
+   * 
+   * @param geom the geometry to reduce
+   * @return the precision-reduced geometry
+   * @throws IllegalArgumentException if the reduction fails due to invalid input geometry is invalid
+   */
   public Geometry reduce(Geometry geom)
   {
-    Geometry reducePW = reducePointwise(geom);
-    if (isPointwise)
-    	return reducePW;
-    
-    //TODO: handle GeometryCollections containing polys
-    if (! (reducePW instanceof Polygonal))
-    	return reducePW;
-    
-    // Geometry is polygonal - test if topology needs to be fixed
-    if (reducePW.isValid()) return reducePW;
-    
-    // hack to fix topology.  
-    // TODO: implement snap-rounding and use that.
-    return fixPolygonalTopology(reducePW);
-  }
-
-  private Geometry reducePointwise(Geometry geom)
-  {
-    GeometryEditor geomEdit;
-    if (changePrecisionModel) {
-    	GeometryFactory newFactory = createFactory(geom.getFactory(), targetPM);
-      geomEdit = new GeometryEditor(newFactory);
+    Geometry reduced;
+    if (isPointwise) {
+      reduced = PointwisePrecisionReducerTransformer.reduce(geom, targetPM);
     }
-    else
-      // don't change geometry factory
-      geomEdit = new GeometryEditor();
-
-    /**
-     * For polygonal geometries, collapses are always removed, in order
-     * to produce correct topology
-     */
-    boolean finalRemoveCollapsed = removeCollapsed;
-    if (geom.getDimension() >= 2)
-    	finalRemoveCollapsed = true;
+    else {
+      reduced = PrecisionReducerTransformer.reduce(geom, targetPM, removeCollapsed);
+    }
     
-    Geometry reduceGeom = geomEdit.edit(geom, 
-    		new PrecisionReducerCoordinateOperation(targetPM, finalRemoveCollapsed));
-    
-    return reduceGeom;
-  }
-  
-  private Geometry fixPolygonalTopology(Geometry geom)
-  {
-  	/**
-  	 * If precision model was *not* changed, need to flip
-  	 * geometry to targetPM, buffer in that model, then flip back
-  	 */
-  	Geometry geomToBuffer = geom;
-  	if (! changePrecisionModel) {
-  		geomToBuffer = changePM(geom, targetPM);
-  	}
-  	
-  	Geometry bufGeom = geomToBuffer.buffer(0);
-  	
-  	Geometry finalGeom = bufGeom;
-  	if (! changePrecisionModel) {
-  	  // a slick way to copy the geometry with the original precision factory
-  		finalGeom = geom.getFactory().createGeometry(bufGeom);
-  	}
-  	return finalGeom;
+    // TODO: incorporate this in the Transformer above
+    if (changePrecisionModel) {
+      return changePM(reduced, targetPM);
+    }
+    return reduced;
   }
   
   /**

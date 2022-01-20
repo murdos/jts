@@ -1,12 +1,10 @@
-
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -63,10 +61,6 @@ public class CoordinateList
   {
   	ensureCapacity(coord.length);
     add(coord, allowRepeated);
-  }
-
-  public boolean add(Coordinate coord) {
-	return super.add(coord);
   }
 
   public Coordinate getCoordinate(int i) { return (Coordinate) get(i); }
@@ -215,6 +209,27 @@ public class CoordinateList
   public Coordinate[] toCoordinateArray()
   {
     return (Coordinate[]) toArray(coordArrayType);
+  }
+
+  /**
+   * Creates an array containing the coordinates in this list,
+   * oriented in the given direction (forward or reverse).
+   * 
+   * @param isForward true if the direction is forward, false for reverse
+   * @return an oriented array of coordinates
+   */
+  public Coordinate[] toCoordinateArray(boolean isForward)
+  {
+    if (isForward) {
+      return (Coordinate[]) toArray(coordArrayType);
+    }
+    // construct reversed array
+    int size = size();
+    Coordinate[] pts = new Coordinate[size];
+    for (int i = 0; i < size; i++) {
+      pts[i] = get(size - i - 1);
+    }
+    return pts;
   }
 
   /**

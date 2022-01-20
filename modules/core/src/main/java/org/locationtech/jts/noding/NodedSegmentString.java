@@ -1,11 +1,10 @@
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -14,7 +13,6 @@ package org.locationtech.jts.noding;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 import org.locationtech.jts.algorithm.LineIntersector;
@@ -28,11 +26,15 @@ import org.locationtech.jts.io.WKTWriter;
  * The line segments are represented by an array of {@link Coordinate}s.
  * Intended to optimize the noding of contiguous segments by
  * reducing the number of allocated objects.
- * SegmentStrings can carry a context object, which is useful
+ * {@link SegmentString}s can carry a context object, which is useful
  * for preserving topological or parentage information.
  * All noded substrings are initialized with the same context object.
+ * <p>
+ * For read-only applications use {@link BasicSegmentString}, 
+ * which is (slightly) more lightweight.
  *
  * @version 1.7
+ * @see BasicSegmentString
  */
 public class NodedSegmentString
 	implements NodableSegmentString
@@ -58,8 +60,8 @@ public class NodedSegmentString
 	 */
  public static void getNodedSubstrings(Collection segStrings, Collection resultEdgelist)
   {
-    for (Iterator i = segStrings.iterator(); i.hasNext(); ) {
-      NodedSegmentString ss = (NodedSegmentString) i.next();
+    for (Object segString : segStrings) {
+      NodedSegmentString ss = (NodedSegmentString) segString;
       ss.getNodeList().addSplitEdges(resultEdgelist);
     }
   }
@@ -69,7 +71,7 @@ public class NodedSegmentString
   private Object data;
 
   /**
-   * Creates a new segment string from a list of vertices.
+   * Creates a instance from a list of vertices and optional data object.
    *
    * @param pts the vertices of the segment string
    * @param data the user-defined data of this segment string (may be null)
@@ -78,6 +80,17 @@ public class NodedSegmentString
   {
     this.pts = pts;
     this.data = data;
+  }
+
+  /**
+   * Creates a new instance from a {@link SegmentString}.
+   *
+   * @param ss the segment string to use
+   */
+  public NodedSegmentString(SegmentString ss)
+  {
+    this.pts = ss.getCoordinates();
+    this.data = ss.getData();
   }
 
   /**
@@ -99,13 +112,22 @@ public class NodedSegmentString
   public Coordinate getCoordinate(int i) { return pts[i]; }
   public Coordinate[] getCoordinates() { return pts; }
 
+  /**
+   * Gets a list of coordinates with all nodes included.
+   * 
+   * @return an array of coordinates include nodes
+   */
+  public Coordinate[] getNodedCoordinates() {
+    return nodeList.getSplitCoordinates();
+  }
+  
   public boolean isClosed()
   {
     return pts[0].equals(pts[pts.length - 1]);
   }
 
   /**
-   * Gets the octant of the segment starting at vertex <code>index</code>.
+   * Gets the octant of the segment starting at vertex {@code index}.
    *
    * @param index the index of the vertex starting the segment.  Must not be
    * the last index in the vertex list
@@ -181,8 +203,8 @@ public class NodedSegmentString
 				normalizedSegmentIndex = nextSegIndex;
 			}
 		}
-		/**
-		 * Add the intersection point to edge intersection list.
+		/*
+		  Add the intersection point to edge intersection list.
 		 */
 		SegmentNode ei = nodeList.add(intPt, normalizedSegmentIndex);
 		return ei;

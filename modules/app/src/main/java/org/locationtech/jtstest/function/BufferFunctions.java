@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -18,6 +18,8 @@ import java.util.List;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.util.GeometryMapper;
 import org.locationtech.jts.geom.util.LinearComponentExtracter;
 import org.locationtech.jts.geom.util.GeometryMapper.MapOp;
@@ -26,7 +28,8 @@ import org.locationtech.jts.operation.buffer.BufferInputLineSimplifier;
 import org.locationtech.jts.operation.buffer.BufferOp;
 import org.locationtech.jts.operation.buffer.BufferParameters;
 import org.locationtech.jts.operation.buffer.OffsetCurveBuilder;
-import org.locationtech.jts.operation.buffer.OffsetCurveSetBuilder;
+import org.locationtech.jts.operation.buffer.BufferCurveSetBuilder;
+import org.locationtech.jts.operation.buffer.VariableBuffer;
 import org.locationtech.jts.operation.buffer.validate.BufferResultValidator;
 import org.locationtech.jtstest.geomfunction.Metadata;
 
@@ -36,8 +39,8 @@ public class BufferFunctions {
 	public static String bufferDescription = "Buffers a geometry by a distance";
 	
 	@Metadata(description="Buffer a geometry by a distance")
-	public static Geometry buffer(Geometry g, double distance)		{		return g.buffer(distance);	}
-	
+  public static Geometry buffer(Geometry g, double distance)    {   return g.buffer(distance);  }
+
 	public static Geometry bufferWithParams(Geometry g, 
 	    Double distance,
 	    @Metadata(title="Quadrant Segs")
@@ -105,10 +108,9 @@ public class BufferFunctions {
   private static Geometry buildCurveSet(Geometry g, double dist, BufferParameters bufParams)
   {
     // --- now construct curve
-    OffsetCurveBuilder ocb = new OffsetCurveBuilder(
+    BufferCurveSetBuilder ocsb = new BufferCurveSetBuilder(g, dist, 
         g.getFactory().getPrecisionModel(),
         bufParams);
-    OffsetCurveSetBuilder ocsb = new OffsetCurveSetBuilder(g, dist, ocb);
     List curves = ocsb.getCurves();
     
     List lines = new ArrayList();
@@ -189,5 +191,37 @@ public class BufferFunctions {
 
   public static Geometry bufferAndInverse(Geometry g, double distance) {
     return g.buffer(distance).buffer(-distance);
+  }
+  
+  @Metadata(description="Buffer a line by a distance varying along the line")
+  public static Geometry variableBuffer(Geometry line,
+      @Metadata(title="Start distance")
+      double startDist,
+      @Metadata(title="End distance")
+      double endDist) {
+    if (line instanceof Polygon) {
+      line = ((Polygon) line).getExteriorRing();
+    }
+    return VariableBuffer.buffer(line, startDist, endDist);
+  }
+  
+  @Metadata(description="Buffer a line by a distance varying along the line, with distances for start/end and the middle")
+  public static Geometry variableBufferMid(Geometry line,
+      @Metadata(title="Start distance")
+      double startDist,
+      @Metadata(title="Middle distance")
+      double midDist)  
+  {
+    if (line instanceof Polygon) {
+      line = ((Polygon) line).getExteriorRing();
+    }
+    return VariableBuffer.buffer(line, startDist, midDist, startDist);
+  }
+  
+  public static Geometry bufferRadius(Geometry radiusLine) {
+    double distance = radiusLine.getLength();
+    Coordinate centrePt = radiusLine.getCoordinate();
+    Point centre = radiusLine.getFactory().createPoint(centrePt);
+    return centre.buffer(distance);
   }
 }

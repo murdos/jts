@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -173,6 +173,52 @@ public class CreateRandomShapeFunctions {
     return result;
   }
   
+  static final double PHI2 = 1.32471795724474602596;
+  
+  /**
+   * Creates a set of quasi-random 2D points using the Roberts recurrences.
+   * <a href='http://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences'>Roberts recurrences</a> 
+   * are based on the generalized Golden Ratio (for the 2D case, Phi2).
+   * They have excellent low-discrepancy characteristics.
+   * This mean they are non-periodic and have less clustering
+   * than random points or Halton points.
+   * 
+   * @param geom
+   * @param nPts
+   * @return
+   */
+  @Metadata(description="Create Roberts quasi-random points")
+  public static Geometry robertsPoints(Geometry geom, int nPts)
+  {
+    Envelope env = FunctionsUtil.getEnvelopeOrDefault(geom);
+    Coordinate[] pts = new Coordinate[nPts];
+    double baseX = env.getMinX();
+    double baseY = env.getMinY();
+    
+    final double A1 = 1.0 / PHI2;
+    final double A2 = 1.0/(PHI2 * PHI2);
+    double r1 = 0.5;
+    double r2 = 0.5;
+    int i = 0;
+    while (i < nPts) {
+      r1 = quasirandom(r1, A1);
+      r2 = quasirandom(r2, A2);
+      double x = baseX + env.getWidth() * r1;
+      double y = baseY + env.getHeight() * r2;
+      Coordinate p = new Coordinate(x, y);
+      if (! env.contains(p))
+        continue;
+      pts[i++] = p;
+    }
+    return FunctionsUtil.getFactoryOrDefault(geom).createMultiPoint(pts);
+  }
+
+  private static double quasirandom(double curr, double alpha) {
+    double next = curr + alpha;
+    if (next < 1) return next;
+    return next - Math.floor(next);
+  }
+  
   public static Geometry randomSegments(Geometry g, int nPts) {
     Envelope env = FunctionsUtil.getEnvelopeOrDefault(g);
     GeometryFactory geomFact = FunctionsUtil.getFactoryOrDefault(g);
@@ -212,6 +258,33 @@ public class CreateRandomShapeFunctions {
         lines.add(geomFact.createLineString(new Coordinate[] {
             new Coordinate(x0, y0), new Coordinate(x1, y1) }));
       }
+    }
+    return geomFact.buildGeometry(lines);
+  }
+
+  public static Geometry randomSegmentsRectilinear(Geometry g, int nPts) {
+    Envelope env = FunctionsUtil.getEnvelopeOrDefault(g);
+    GeometryFactory geomFact = FunctionsUtil.getFactoryOrDefault(g);
+    double xLen = env.getWidth();
+    double yLen = env.getHeight();
+
+    List lines = new ArrayList();
+
+    for (int i = 0; i < nPts; i++) {
+      double x0 = env.getMinX() + xLen * Math.random();
+      double x1 = env.getMinY() + yLen * Math.random();
+      double v = env.getMinX() + xLen * Math.random();
+      double y0 = v;
+      double y1 = v;
+      boolean isXFixed = Math.random() < 0.5;
+      if (isXFixed) {
+        y0 = x0;
+        y1 = x1;
+        x0 = v;
+        x1 = v;
+      }
+      lines.add(geomFact.createLineString(new Coordinate[] {
+          new Coordinate(x0, y0), new Coordinate(x1, y1) }));
     }
     return geomFact.buildGeometry(lines);
   }

@@ -1,13 +1,10 @@
-
-
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -17,6 +14,7 @@ package org.locationtech.jts.geomgraph;
 import java.io.PrintStream;
 
 import org.locationtech.jts.geom.Location;
+import org.locationtech.jts.geom.Position;
 import org.locationtech.jts.geom.TopologyException;
 
 
@@ -29,7 +27,12 @@ public class DirectedEdge
 
   /**
    * Computes the factor for the change in depth when moving from one location to another.
-   * E.g. if crossing from the INTERIOR to the EXTERIOR the depth decreases, so the factor is -1
+   * E.g. if crossing from the {@link Location#INTERIOR} to the{@link Location#EXTERIOR}
+   * the depth decreases, so the factor is -1.
+   *
+   * @param currLocation Current location
+   * @param nextLocation Next location
+   * @return change of depth moving from currLocation to nextLocation
    */
   public static int depthFactor(int currLocation, int nextLocation)
   {
@@ -79,6 +82,15 @@ public class DirectedEdge
   public EdgeRing getMinEdgeRing() { return minEdgeRing; }
   public int getDepth(int position) { return depth[position]; }
 
+  /**
+   * Set depth for a position.
+   *
+   * You may also use {@link #setEdgeDepths(int, int)} to
+   * update depth and opposite depth together.
+   *
+   * @param position Position to update
+   * @param depthVal Depth at the provided position
+   */
   public void setDepth(int position, int depthVal)
   {
     if (depth[position] != -999) {
@@ -100,9 +112,12 @@ public class DirectedEdge
   }
 
   /**
-   * setVisitedEdge marks both DirectedEdges attached to a given Edge.
+   * Marks both DirectedEdges attached to a given Edge.
+   *
    * This is used for edges corresponding to lines, which will only
    * appear oriented in a single direction in the result.
+   *
+   * @param isVisited True to mark edge as visited
    */
   public void setVisitedEdge(boolean isVisited)
   {
@@ -131,6 +146,8 @@ public class DirectedEdge
    * <li> at least one of the labels is a line label
    * <li> any labels which are not line labels have all Locations = EXTERIOR
    * </ul>
+   *
+   * @return If edge is a line edge
    */
   public boolean isLineEdge()
   {
@@ -177,6 +194,9 @@ public class DirectedEdge
   /**
    * Set both edge depths.  One depth for a given side is provided.  The other is
    * computed depending on the Location transition and the depthDelta of the edge.
+   *
+   * @param position Position to update
+   * @param depth Depth at the provided position
    */
   public void setEdgeDepths(int position, int depth)
   {

@@ -1,13 +1,10 @@
-
-
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -15,6 +12,7 @@
 package org.locationtech.jts.geomgraph;
 
 import org.locationtech.jts.geom.Location;
+import org.locationtech.jts.geom.Position;
 
  /**
  * A <code>Label</code> indicates the topological relationship of a component
@@ -57,6 +55,8 @@ public class Label {
   /**
    * Construct a Label with a single location for both Geometries.
    * Initialize the locations to Null
+   *
+   * @param onLoc On location
    */
   public Label(int onLoc)
   {
@@ -66,6 +66,9 @@ public class Label {
   /**
    * Construct a Label with a single location for both Geometries.
    * Initialize the location for the Geometry index.
+   *
+   * @param geomIndex Geometry index
+   * @param onLoc On location
    */
   public Label(int geomIndex, int onLoc)
   {
@@ -76,6 +79,10 @@ public class Label {
   /**
    * Construct a Label with On, Left and Right locations for both Geometries.
    * Initialize the locations for both Geometries to the given values.
+   *
+   * @param onLoc On location
+   * @param rightLoc Right location
+   * @param leftLoc Left location
    */
   public Label(int onLoc, int leftLoc, int rightLoc)
   {
@@ -85,6 +92,11 @@ public class Label {
   /**
    * Construct a Label with On, Left and Right locations for both Geometries.
    * Initialize the locations for the given Geometry index.
+   *
+   * @param geomIndex Geometry index
+   * @param onLoc On location
+   * @param rightLoc Right location
+   * @param leftLoc Left location
    */
   public Label(int geomIndex, int onLoc, int leftLoc, int rightLoc)
   {
@@ -94,6 +106,8 @@ public class Label {
   }
   /**
    * Construct a Label with the same values as the argument Label.
+   *
+   * @param lbl Label
    */
   public Label(Label lbl)
   {
@@ -132,8 +146,10 @@ public class Label {
   }
   /**
    * Merge this label with another one.
-   * Merging updates any null attributes of this label with the attributes from lbl
-   */
+   * Merging updates any null attributes of this label with the attributes from lbl.
+   *
+   * @param lbl Label to merge
+s   */
   public void merge(Label lbl)
   {
     for (int i = 0; i < 2; i++) {
@@ -179,6 +195,7 @@ public class Label {
   }
   /**
    * Converts one GeometryLocation to a Line location
+   * @param geomIndex geometry location
    */
   public void toLine(int geomIndex)
   {

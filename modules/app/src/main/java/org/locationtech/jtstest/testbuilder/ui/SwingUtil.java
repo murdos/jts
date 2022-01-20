@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -13,7 +13,10 @@
 package org.locationtech.jtstest.testbuilder.ui;
 
 import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.RenderingHints;
 import java.awt.SystemColor;
 import java.awt.Toolkit;
 import java.util.Collection;
@@ -43,6 +46,7 @@ import org.locationtech.jtstest.util.io.MultiFormatReader;
 public class SwingUtil {
 
   public static FileFilter XML_FILE_FILTER = createFileFilter("JTS Test XML File (*.xml)", ".xml");
+  public static FileFilter HTML_FILE_FILTER = createFileFilter("HTML File (*.html)", ".html");
   public static  FileFilter JAVA_FILE_FILTER = createFileFilter("Java File (*.java)", ".java");
   public static  FileFilter PNG_FILE_FILTER = createFileFilter("PNG File (*.png)", ".png");
 
@@ -271,8 +275,18 @@ public class SwingUtil {
     return (e.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK;
   }
 
+  public static boolean isShiftKeyPressed(ActionEvent e) {
+    return (e.getModifiers() & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK;
+  }
+
   public static void showTab(JTabbedPane tabPane, String tabName)
   {
     tabPane.setSelectedIndex(tabPane.indexOfTab(tabName));
+  }
+  
+  public static void setAntiAlias(Graphics2D g, boolean isOn) {
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+        isOn ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_OFF);
+
   }
 }

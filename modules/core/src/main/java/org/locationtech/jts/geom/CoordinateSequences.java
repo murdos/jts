@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -12,7 +12,6 @@
 package org.locationtech.jts.geom;
 
 import org.locationtech.jts.io.OrdinateFormat;
-import org.locationtech.jts.util.NumberUtil;
 
 
 /**
@@ -29,6 +28,8 @@ public class CoordinateSequences {
    */
   public static void reverse(CoordinateSequence seq)
   {
+    if (seq.size() <= 1) return;
+    
     int last = seq.size() - 1;
     int mid = last / 2;
     for (int i = 0; i <= mid; i++) {
@@ -184,12 +185,16 @@ public class CoordinateSequences {
       for (int d = 0; d < dim; d++) {
         double v1 = cs1.getOrdinate(i, d);
         double v2 = cs2.getOrdinate(i, d);
-        if (cs1.getOrdinate(i, d) == cs2.getOrdinate(i, d))
+        if (cs1.getOrdinate(i, d) == cs2.getOrdinate(i, d)) {
           continue;
-        // special check for NaNs
-        if (Double.isNaN(v1) && Double.isNaN(v2))
+        }
+        else if (Double.isNaN(v1) && Double.isNaN(v2)) {
+          // special check for NaNs
           continue;
-        return false;
+        }
+        else {
+          return false;
+        }
       }
     }
     return true;

@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -23,76 +23,92 @@ import org.locationtech.jts.math.MathUtil;
  * double-precision floating point.
  * 
  * @version 1.7
- * @deprecated See Length, Area, Distance, Orientation, PointLocation
+ * @deprecated See {@link Length}, {@link Area}, {@link Distance},
+ *             {@link Orientation}, {@link PointLocation}
  */
 public class CGAlgorithms
 {
 
   /**
    * A value that indicates an orientation of clockwise, or a right turn.
+   * 
+   * @deprecated Use {@link Orientation#CLOCKWISE} instead.
    */
   public static final int CLOCKWISE = -1;
 
   /**
    * A value that indicates an orientation of clockwise, or a right turn.
+   * 
+   * @deprecated Use {@link Orientation#RIGHT} instead.
    */
   public static final int RIGHT = CLOCKWISE;
 
   /**
    * A value that indicates an orientation of counterclockwise, or a left turn.
+   * 
+   * @deprecated Use {@link Orientation#COUNTERCLOCKWISE} instead.
    */
   public static final int COUNTERCLOCKWISE = 1;
 
   /**
    * A value that indicates an orientation of counterclockwise, or a left turn.
+   * 
+   * @deprecated Use {@link Orientation#LEFT} instead.
    */
   public static final int LEFT = COUNTERCLOCKWISE;
 
   /**
    * A value that indicates an orientation of collinear, or no turn (straight).
+   * 
+   * @deprecated Use {@link Orientation#COLLINEAR} instead.
    */
   public static final int COLLINEAR = 0;
 
   /**
    * A value that indicates an orientation of collinear, or no turn (straight).
+   * 
+   * @deprecated Use {@link Orientation#STRAIGHT} instead.
    */
   public static final int STRAIGHT = COLLINEAR;
 
   /**
-   * Returns the index of the direction of the point <code>q</code> relative to
-   * a vector specified by <code>p1-p2</code>.
+   * Returns the index of the direction of the point {@code q} relative to
+   * a vector specified by {@code p1-p2}.
    * 
    * @param p1 the origin point of the vector
    * @param p2 the final point of the vector
    * @param q the point to compute the direction to
    * 
-   * @return 1 if q is counter-clockwise (left) from p1-p2
-   * @return -1 if q is clockwise (right) from p1-p2
-   * @return 0 if q is collinear with p1-p2
+   * @return {@code 1} if q is counter-clockwise (left) from p1-p2
+   *        {@code -1} if q is clockwise (right) from p1-p2
+   *         {@code 0} if q is collinear with p1-p2
+   *
+   * @deprecated Use {@link Orientation#index(Coordinate, Coordinate, Coordinate)}
+   *             instead.
    */
   public static int orientationIndex(Coordinate p1, Coordinate p2, Coordinate q)
   {
-    /**
-     * MD - 9 Aug 2010 It seems that the basic algorithm is slightly orientation
-     * dependent, when computing the orientation of a point very close to a
-     * line. This is possibly due to the arithmetic in the translation to the
-     * origin.
-     * 
-     * For instance, the following situation produces identical results in spite
-     * of the inverse orientation of the line segment:
-     * 
-     * Coordinate p0 = new Coordinate(219.3649559090992, 140.84159161824724);
-     * Coordinate p1 = new Coordinate(168.9018919682399, -5.713787599646864);
-     * 
-     * Coordinate p = new Coordinate(186.80814046338352, 46.28973405831556); int
-     * orient = orientationIndex(p0, p1, p); int orientInv =
-     * orientationIndex(p1, p0, p);
-     * 
-     * A way to force consistent results is to normalize the orientation of the
-     * vector using the following code. However, this may make the results of
-     * orientationIndex inconsistent through the triangle of points, so it's not
-     * clear this is an appropriate patch.
-     * 
+    /*
+      MD - 9 Aug 2010 It seems that the basic algorithm is slightly orientation
+      dependent, when computing the orientation of a point very close to a
+      line. This is possibly due to the arithmetic in the translation to the
+      origin.
+
+      For instance, the following situation produces identical results in spite
+      of the inverse orientation of the line segment:
+
+      Coordinate p0 = new Coordinate(219.3649559090992, 140.84159161824724);
+      Coordinate p1 = new Coordinate(168.9018919682399, -5.713787599646864);
+
+      Coordinate p = new Coordinate(186.80814046338352, 46.28973405831556); int
+      orient = orientationIndex(p0, p1, p); int orientInv =
+      orientationIndex(p1, p0, p);
+
+      A way to force consistent results is to normalize the orientation of the
+      vector using the following code. However, this may make the results of
+      orientationIndex inconsistent through the triangle of points, so it's not
+      clear this is an appropriate patch.
+
      */
     return CGAlgorithmsDD.orientationIndex(p1, p2, q);
     // testing only
@@ -121,7 +137,9 @@ public class CGAlgorithms
    *          first point identical to last point)
    * @return true if p is inside ring
    * 
-   * @see locatePointInRing
+   * @see #locatePointInRing(Coordinate, Coordinate[])  
+   * @deprecated Use {@link PointLocation#isInRing(Coordinate, Coordinate[])}
+   *             instead.
    */
   public static boolean isPointInRing(Coordinate p, Coordinate[] ring)
   {
@@ -141,6 +159,9 @@ public class CGAlgorithms
    *          an array of coordinates representing the ring (which must have
    *          first point identical to last point)
    * @return the {@link Location} of p relative to the ring
+   * @deprecated Use
+   *             {@link PointLocation#locateInRing(Coordinate, Coordinate[])}
+   *             instead.
    */
   public static int locatePointInRing(Coordinate p, Coordinate[] ring)
   {
@@ -153,6 +174,8 @@ public class CGAlgorithms
    * 
    * @return true if the point is a vertex of the line or lies in the interior
    *         of a line segment in the linestring
+   * @deprecated Use {@link PointLocation#isOnLine(Coordinate, Coordinate[])}
+   *             instead.
    */
   public static boolean isOnLine(Coordinate p, Coordinate[] pt)
   {
@@ -184,6 +207,7 @@ public class CGAlgorithms
    * @return true if the ring is oriented counter-clockwise.
    * @throws IllegalArgumentException
    *           if there are too few points to determine orientation (&lt; 4)
+   * @deprecated Use {@link Orientation#isCCW(Coordinate[])} instead.
    */
   public static boolean isCCW(Coordinate[] ring)
   {
@@ -222,25 +246,25 @@ public class CGAlgorithms
     Coordinate prev = ring[iPrev];
     Coordinate next = ring[iNext];
 
-    /**
-     * This check catches cases where the ring contains an A-B-A configuration
-     * of points. This can happen if the ring does not contain 3 distinct points
-     * (including the case where the input array has fewer than 4 elements), or
-     * it contains coincident line segments.
+    /*
+      This check catches cases where the ring contains an A-B-A configuration
+      of points. This can happen if the ring does not contain 3 distinct points
+      (including the case where the input array has fewer than 4 elements), or
+      it contains coincident line segments.
      */
     if (prev.equals2D(hiPt) || next.equals2D(hiPt) || prev.equals2D(next))
       return false;
 
     int disc = computeOrientation(prev, hiPt, next);
 
-    /**
-     * If disc is exactly 0, lines are collinear. There are two possible cases:
-     * (1) the lines lie along the x axis in opposite directions (2) the lines
-     * lie on top of one another
-     * 
-     * (1) is handled by checking if next is left of prev ==> CCW (2) will never
-     * happen if the ring is valid, so don't check for it (Might want to assert
-     * this)
+    /*
+      If disc is exactly 0, lines are collinear. There are two possible cases:
+      (1) the lines lie along the x axis in opposite directions (2) the lines
+      lie on top of one another
+
+      (1) is handled by checking if next is left of prev ==> CCW (2) will never
+      happen if the ring is valid, so don't check for it (Might want to assert
+      this)
      */
     boolean isCCW;
     if (disc == 0) {
@@ -265,6 +289,8 @@ public class CGAlgorithms
    * @return 1 if q is counter-clockwise from p1-p2,
    * or -1 if q is clockwise from p1-p2,
    * or 0 if q is collinear with p1-p2
+   * @deprecated Use {@link Orientation#index(Coordinate, Coordinate, Coordinate)}
+   *             instead.
    */
   public static int computeOrientation(Coordinate p1, Coordinate p2,
       Coordinate q)
@@ -284,6 +310,9 @@ public class CGAlgorithms
    * @param B
    *          another point of the line (must be different to A)
    * @return the distance from p to line segment AB
+   * @deprecated Use
+   *             {@link Distance#pointToSegment(Coordinate, Coordinate, Coordinate)}
+   *             instead.
    */
   public static double distancePointLine(Coordinate p, Coordinate A,
       Coordinate B)
@@ -341,6 +370,9 @@ public class CGAlgorithms
    * @param B
    *          another point of the line (must be different to A)
    * @return the distance from p to line AB
+   * @deprecated Use
+   *             {@link Distance#pointToLinePerpendicular(Coordinate, Coordinate, Coordinate)}
+   *             instead.
    */
   public static double distancePointLinePerpendicular(Coordinate p,
       Coordinate A, Coordinate B)
@@ -368,6 +400,9 @@ public class CGAlgorithms
    * @param line
    *          a sequence of contiguous line segments defined by their vertices
    * @return the minimum distance between the point and the line segments
+   * @deprecated Use
+   *             {@link Distance#pointToSegmentString(Coordinate, Coordinate[])}
+   *             instead.
    */
   public static double distancePointLine(Coordinate p, Coordinate[] line)
   {
@@ -398,6 +433,9 @@ public class CGAlgorithms
    *          one point of the line
    * @param D
    *          another point of the line (must be different to A)
+   * @deprecated Use
+   *             {@link Distance#segmentToSegment(Coordinate, Coordinate, Coordinate, Coordinate)}
+   *             instead.
    */
   public static double distanceLineLine(Coordinate A, Coordinate B,
       Coordinate C, Coordinate D)
@@ -476,15 +514,17 @@ public class CGAlgorithms
    * @param ring
    *          the coordinates forming the ring
    * @return the signed area of the ring
+   * @deprecated Use {@link Area#ofRing(Coordinate[])} or
+   *             {@link Area#ofRingSigned(Coordinate[])} instead.
    */
   public static double signedArea(Coordinate[] ring)
   {
     if (ring.length < 3)
       return 0.0;
     double sum = 0.0;
-    /**
-     * Based on the Shoelace formula.
-     * http://en.wikipedia.org/wiki/Shoelace_formula
+    /*
+      Based on the Shoelace formula.
+      http://en.wikipedia.org/wiki/Shoelace_formula
      */
     double x0 = ring[0].x;
     for (int i = 1; i < ring.length - 1; i++) {
@@ -507,15 +547,17 @@ public class CGAlgorithms
    * @param ring
    *          the coordinates forming the ring
    * @return the signed area of the ring
+   * @deprecated Use {@link Area#ofRing(CoordinateSequence)} or
+   *             {@link Area#ofRingSigned(CoordinateSequence)} instead.
    */
   public static double signedArea(CoordinateSequence ring)
   {
     int n = ring.size();
     if (n < 3)
       return 0.0;
-    /**
-     * Based on the Shoelace formula.
-     * http://en.wikipedia.org/wiki/Shoelace_formula
+    /*
+      Based on the Shoelace formula.
+      http://en.wikipedia.org/wiki/Shoelace_formula
      */
     Coordinate p0 = new Coordinate();
     Coordinate p1 = new Coordinate();
@@ -542,6 +584,7 @@ public class CGAlgorithms
    * @param pts
    *          the points specifying the linestring
    * @return the length of the linestring
+   * @deprecated Use {@link Length#ofLine(CoordinateSequence)} instead.
    */
   public static double length(CoordinateSequence pts)
   {

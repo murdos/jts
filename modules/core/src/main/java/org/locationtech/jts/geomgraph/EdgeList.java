@@ -1,13 +1,10 @@
-
-
-
 /*
  * Copyright (c) 2016 Vivid Solutions.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -45,6 +42,8 @@ public class EdgeList
 
   /**
    * Insert an edge unless it is already in the list
+   *
+   * @param e Edge
    */
   public void add(Edge e)
   {
@@ -65,6 +64,7 @@ public class EdgeList
   /**
    * If there is an edge equal to e already in the list, return it.
    * Otherwise return null.
+   * @param e Edge
    * @return  equal edge, if there is one already in the list
    *          null otherwise
    */
@@ -82,6 +82,7 @@ public class EdgeList
 
   /**
    * If the edge e is already in the list, return its index.
+   * @param e Edge
    * @return  index, if e is already in the list
    *          -1 otherwise
    */

@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.locationtech.jts</groupId>
         <artifactId>jts-modules</artifactId>
-        <version>1.17.0-SNAPSHOT</version>
+        <version>1.18.3-SNAPSHOT</version>
     </parent>
     <artifactId>jts-app</artifactId>
     <name>${project.groupId}:${project.artifactId}</name>
@@ -38,7 +38,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.6</version>
                 <configuration>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
@@ -49,7 +48,7 @@
                         </manifest>
                     </archive>
                     <finalName>JTSTestBuilder</finalName>
-		    <appendAssemblyId>false</appendAssemblyId>
+                    <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
                 <executions>
                     <execution>

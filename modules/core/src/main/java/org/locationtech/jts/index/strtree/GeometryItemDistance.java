@@ -2,9 +2,9 @@
  * Copyright (c) 2016 Martin Davis.
  *
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License 2.0
  * and Eclipse Distribution License v. 1.0 which accompanies this distribution.
- * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v20.html
  * and the Eclipse Distribution License is available at
  *
  * http://www.eclipse.org/org/documents/edl-v10.php.
@@ -23,7 +23,7 @@ import org.locationtech.jts.geom.Geometry;
  * using to query a single index tree,
  * the distance metric is <i>anti-reflexive</i>.
  * That is, if the two arguments are the same Geometry object,
- * the distance returned is {@link Double.MAX_VALUE}.
+ * the distance returned is {@link Double#MAX_VALUE}.
  * 
  * @author Martin Davis
  *
