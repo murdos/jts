@@ -38,9 +38,6 @@ import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.impl.PackedCoordinateSequenceFactory;
 import org.locationtech.jts.io.twkb.TWKBHeader.GeometryType;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-
 /**
  * 
  * <pre>
@@ -582,9 +579,9 @@ class TWKBIO {
 
     private static class BoundsExtractor implements CoordinateSequenceFilter {
 
-        private final @Getter boolean done = false;
+        private final boolean done = false;
 
-        private final @Getter boolean geometryChanged = false;
+        private final boolean geometryChanged = false;
 
         private final int dimensions;
 
@@ -614,11 +611,23 @@ class TWKBIO {
                 ordinates[maxIndex] = maxValue;
             }
         }
+
+        public boolean isDone() {
+            return this.done;
+        }
+
+        public boolean isGeometryChanged() {
+            return this.geometryChanged;
+        }
     }
 
-    public static @RequiredArgsConstructor class TWKBOutputStream {
+    public static class TWKBOutputStream {
 
         private final DataOutput out;
+
+        public TWKBOutputStream(DataOutput out) {
+            this.out = out;
+        }
 
         public static TWKBOutputStream of(DataOutput out) {
             return new TWKBOutputStream(out);
