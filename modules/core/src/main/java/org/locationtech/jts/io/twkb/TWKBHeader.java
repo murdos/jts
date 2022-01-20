@@ -17,26 +17,16 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.function.Function;
 
-import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.MultiLineString;
 import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.io.twkb.TWKBIO.TWKBOutputStream;
-
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
-import lombok.Value;
-import lombok.experimental.Accessors;
-import lombok.experimental.Wither;
 
 /**
  * <pre>
@@ -92,15 +82,154 @@ import lombok.experimental.Wither;
  * }
  * </pre>
  */
-@Value
-@Wither
-@Builder
-@Accessors(fluent = true)
-@EqualsAndHashCode
-@ToString
 class TWKBHeader {
 
-    static enum GeometryType {
+    public TWKBHeader() {
+
+    }
+
+    public TWKBHeader(TWKBHeader other) {
+        this.geometryType = other.geometryType;
+        this.xyPrecision = other.xyPrecision;
+        this.hasBBOX = other.hasBBOX;
+        this.hasSize = other.hasSize;
+        this.hasIdList = other.hasIdList;
+        this.isEmpty = other.isEmpty;
+        this.hasZ = other.hasZ;
+        this.hasM = other.hasM;
+        this.zPrecision = other.zPrecision;
+        this.mPrecision = other.mPrecision;
+        this.geometryBodySize = other.geometryBodySize;
+        this.optimizedEncoding = other.optimizedEncoding;
+    }
+
+    public GeometryType geometryType() {
+        return this.geometryType;
+    }
+
+    public int xyPrecision() {
+        return this.xyPrecision;
+    }
+
+    public boolean hasBBOX() {
+        return this.hasBBOX;
+    }
+
+    public boolean hasSize() {
+        return this.hasSize;
+    }
+
+    public boolean hasIdList() {
+        return this.hasIdList;
+    }
+
+    public boolean isEmpty() {
+        return this.isEmpty;
+    }
+
+    public boolean hasZ() {
+        return this.hasZ;
+    }
+
+    public boolean hasM() {
+        return this.hasM;
+    }
+
+    public int zPrecision() {
+        return this.zPrecision;
+    }
+
+    public int mPrecision() {
+        return this.mPrecision;
+    }
+
+    public boolean optimizedEncoding() {
+        return this.optimizedEncoding;
+    }
+
+    public TWKBHeader setGeometryType(GeometryType geometryType) {
+        this.geometryType = geometryType;
+        return this;
+    }
+
+    public TWKBHeader setXyPrecision(int xyPrecision) {
+        this.xyPrecision = xyPrecision;
+        return this;
+    }
+
+    public TWKBHeader setHasBBOX(boolean hasBBOX) {
+        this.hasBBOX = hasBBOX;
+        return this;
+    }
+
+    public TWKBHeader setHasSize(boolean hasSize) {
+        this.hasSize = hasSize;
+        return this;
+    }
+
+    public TWKBHeader setHasIdList(boolean hasIdList) {
+        this.hasIdList = hasIdList;
+        return this;
+    }
+
+    public TWKBHeader setEmpty(boolean empty) {
+        isEmpty = empty;
+        return this;
+    }
+
+    public TWKBHeader setHasZ(boolean hasZ) {
+        this.hasZ = hasZ;
+        return this;
+    }
+
+    public TWKBHeader setHasM(boolean hasM) {
+        this.hasM = hasM;
+        return this;
+    }
+
+    public TWKBHeader setZPrecision(int zPrecision) {
+        this.zPrecision = zPrecision;
+        return this;
+    }
+
+    public TWKBHeader setMPrecision(int mPrecision) {
+        this.mPrecision = mPrecision;
+        return this;
+    }
+
+    public TWKBHeader setGeometryBodySize(int geometryBodySize) {
+        this.geometryBodySize = geometryBodySize;
+        return this;
+    }
+
+    public TWKBHeader setOptimizedEncoding(boolean optimizedEncoding) {
+        this.optimizedEncoding = optimizedEncoding;
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return "TWKBHeader{" +
+            "geometryType=" + geometryType +
+            ", xyPrecision=" + xyPrecision +
+            ", hasBBOX=" + hasBBOX +
+            ", hasSize=" + hasSize +
+            ", hasIdList=" + hasIdList +
+            ", isEmpty=" + isEmpty +
+            ", hasZ=" + hasZ +
+            ", hasM=" + hasM +
+            ", zPrecision=" + zPrecision +
+            ", mPrecision=" + mPrecision +
+            ", geometryBodySize=" + geometryBodySize +
+            ", optimizedEncoding=" + optimizedEncoding +
+            '}';
+    }
+
+    public int geometryBodySize() {
+        return this.geometryBodySize;
+    }
+
+    enum GeometryType {
         POINT(1, GeometryFactory::createPoint), //
         LINESTRING(2, GeometryFactory::createLineString), //
         POLYGON(3, GeometryFactory::createPolygon), //
@@ -109,9 +238,9 @@ class TWKBHeader {
         MULTIPOLYGON(6, GeometryFactory::createMultiPolygon), //
         GEOMETRYCOLLECTION(7, GeometryFactory::createGeometryCollection);
 
-        private int value;
+        private final int value;
 
-        private Function<GeometryFactory, Geometry> emptyBuilder;
+        private final Function<GeometryFactory, Geometry> emptyBuilder;
 
         GeometryType(int value, Function<GeometryFactory, Geometry> emptyBuilder) {
             this.value = value;
@@ -158,7 +287,7 @@ class TWKBHeader {
     // first 1-byte header //
     private GeometryType geometryType;
 
-    private @Builder.Default int xyPrecision = 0;
+    private int xyPrecision = 0;
 
     // metadata_header := byte
     // bbox_flag := 0b00000001
@@ -166,18 +295,17 @@ class TWKBHeader {
     // idlist_flag := 0b00000100
     // extended_precision_flag := 0b00001000
     // empty_geometry_flag := 0b00010000
-    private @Builder.Default boolean hasBBOX = false;
+    private boolean hasBBOX = false;
 
-    private @Builder.Default boolean hasSize = false;
+    private boolean hasSize = false;
 
-    private @Builder.Default boolean hasIdList = false;
+    private boolean hasIdList = false;
 
-    // private @Builder.Default boolean hasExtendedPrecision = false;
     public boolean hasExtendedPrecision() {
         return hasZ() || hasM();
     }
 
-    private @Builder.Default boolean isEmpty = false;
+    private boolean isEmpty = false;
 
     // extended_dimensions_header present iif extended_precision_flag == 1
     // extended_dimensions_header := byte
@@ -186,13 +314,13 @@ class TWKBHeader {
     // Z_precision := 0b000XXX00 3-bit unsigned integer using bits 3-5
     // M_precision := 0bXXX00000 3-bit unsigned integer using bits 6-8
 
-    private @Builder.Default boolean hasZ = false;
+    private boolean hasZ = false;
 
-    private @Builder.Default boolean hasM = false;
+    private boolean hasM = false;
 
-    private @Builder.Default int zPrecision = 0;
+    private int zPrecision = 0;
 
-    private @Builder.Default int mPrecision = 0;
+    private int mPrecision = 0;
 
     /**
      * Size of encoded geometry body, iif size_flag == 1, defaults to {@code -1} if {@link #hasSize}
@@ -200,12 +328,12 @@ class TWKBHeader {
      * <p>
      * {@code geometry_body_size := uint32 # size in bytes of <geometry_body>}
      */
-    private @Getter int geometryBodySize;
+    private int geometryBodySize;
 
     /////////////////////// custom optimizations ///////////////////////
 
     // See TWKBWriter.setOptimizedEncoding for a description of this flag
-    private @Builder.Default boolean optimizedEncoding = true;
+    private boolean optimizedEncoding = true;
 
     public int getDimensions() {
         return 2 + (hasZ ? 1 : 0) + (hasM ? 1 : 0);
@@ -276,17 +404,18 @@ class TWKBHeader {
         if (hasSize) {
             geometryBodySize = Varint.readUnsignedVarInt(in);
         }
-        return TWKBHeader.builder()//
-                .geometryType(geometryType)//
-                .xyPrecision(precision)//
-                .hasZ(hasZ).zPrecision(zprecision)//
-                .hasM(hasM).mPrecision(mprecision)//
-                .hasIdList(hasIdList)//
-                .isEmpty(isEmpty)//
-                .hasSize(hasSize)//
-                .hasBBOX(hasBBOX)//
-                .geometryBodySize(geometryBodySize)//
-                .build();
+        return new TWKBHeader()//
+                .setGeometryType(geometryType)//
+                .setXyPrecision(precision)//
+                .setHasZ(hasZ)
+                .setZPrecision(zprecision)//
+                .setHasM(hasM)
+                .setMPrecision(mprecision)//
+                .setHasIdList(hasIdList)//
+                .setEmpty(isEmpty)//
+                .setHasSize(hasSize)//
+                .setHasBBOX(hasBBOX)//
+                .setGeometryBodySize(geometryBodySize);
     }
 
     public void writeTo(DataOutput out) throws IOException {

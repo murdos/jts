@@ -101,7 +101,7 @@ class TWKBIO {
     }
 
     public static void write(Geometry geom, TWKBOutputStream out) throws IOException {
-        write(geom, out, TWKBHeader.builder().build());
+        write(geom, out, new TWKBHeader());
     }
 
     public static TWKBHeader write(Geometry geometry, TWKBOutputStream out, TWKBHeader params)
@@ -115,13 +115,13 @@ class TWKBIO {
         Objects.requireNonNull(out, "DataOutput is null");
         Objects.requireNonNull(params, "TWKBHeader is null");
 
-        TWKBHeader header = prepareHeader(geometry, params, forcePreserveHeaderDimensions);
+        TWKBHeader header = prepareHeader(geometry, new TWKBHeader(params), forcePreserveHeaderDimensions);
 
         if (header.hasSize()) {
             BufferedTKWBOutputStream bufferedBody = BufferedTKWBOutputStream.create();
             writeGeometryBody(geometry, bufferedBody, header);
             int bodySize = bufferedBody.size();
-            header = header.withGeometryBodySize(bodySize);
+            header = header.setGeometryBodySize(bodySize);
             header.writeTo(out);
             bufferedBody.writeTo(out);
         } else {
@@ -138,18 +138,18 @@ class TWKBIO {
         final GeometryType geometryType = GeometryType.valueOf(geometry.getClass());
         TWKBHeader header = forcePreserveHeaderDimensions ? params
                 : setDimensions(geometry, params);
-        header = header.withEmpty(isEmpty).withGeometryType(geometryType);
+        header = header.setEmpty(isEmpty).setGeometryType(geometryType);
 
         if (params.optimizedEncoding()) {
             if (isEmpty && header.hasExtendedPrecision()) {
-                header = header.withHasZ(false).withHasM(false);
+                header = header.setHasZ(false).setHasM(false);
             }
             if ((isEmpty || geometryType == POINT) && header.hasBBOX()) {
-                header = header.withHasBBOX(false);
+                header = header.setHasBBOX(false);
             }
         } else {
             if (isEmpty && header.hasBBOX()) {
-                header = header.withHasBBOX(false);
+                header = header.setHasBBOX(false);
             }
         }
         return header;
@@ -543,7 +543,7 @@ class TWKBIO {
 
     private static TWKBHeader setDimensions(Geometry g, TWKBHeader header) {
         if (g.isEmpty()) {
-            return header.withHasZ(false).withHasM(false);
+            return header.setHasZ(false).setHasM(false);
         }
         if (g instanceof Point) {
             return setDimensions(((Point) g).getCoordinateSequence(), header);
@@ -560,7 +560,7 @@ class TWKBIO {
     private static TWKBHeader setDimensions(CoordinateSequence seq, TWKBHeader header) {
         boolean hasZ = seq.hasZ();
         boolean hasM = seq.hasM();
-        return header.withHasZ(hasZ).withHasM(hasM);
+        return header.setHasZ(hasZ).setHasM(hasM);
     }
 
     private static class BoundsExtractor implements CoordinateSequenceFilter {

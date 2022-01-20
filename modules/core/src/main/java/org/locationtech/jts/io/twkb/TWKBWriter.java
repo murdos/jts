@@ -81,7 +81,7 @@ import org.locationtech.jts.io.twkb.TWKBIO.TWKBOutputStream;
  */
 public class TWKBWriter {
 
-    private TWKBHeader paramsHeader = TWKBHeader.builder().build();
+    private TWKBHeader paramsHeader = new TWKBHeader();
 
     public TWKBWriter() {
     }
@@ -99,17 +99,17 @@ public class TWKBWriter {
             throw new IllegalArgumentException(
                     "X/Z precision cannot be greater than 7 or less than -7");
         }
-        paramsHeader = paramsHeader.withXyPrecision(xyprecision);
+        paramsHeader = paramsHeader.setXyPrecision(xyprecision);
         return this;
     }
 
     public TWKBWriter setEncodeZ(boolean includeZDimension) {
-        paramsHeader = paramsHeader.withHasZ(includeZDimension);
+        paramsHeader = paramsHeader.setHasZ(includeZDimension);
         return this;
     }
 
     public TWKBWriter setEncodeM(boolean includeMDimension) {
-        paramsHeader = paramsHeader.withHasM(includeMDimension);
+        paramsHeader = paramsHeader.setHasM(includeMDimension);
         return this;
     }
 
@@ -117,7 +117,7 @@ public class TWKBWriter {
         if (zprecision < 0 || zprecision > 7) {
             throw new IllegalArgumentException("Z precision cannot be negative or greater than 7");
         }
-        paramsHeader = paramsHeader.withZPrecision(zprecision);
+        paramsHeader = paramsHeader.setZPrecision(zprecision);
         return this;
     }
 
@@ -125,17 +125,17 @@ public class TWKBWriter {
         if (mprecision < 0 || mprecision > 7) {
             throw new IllegalArgumentException("M precision cannot be negative or greater than 7");
         }
-        paramsHeader = paramsHeader.withMPrecision(mprecision);
+        paramsHeader = paramsHeader.setMPrecision(mprecision);
         return this;
     }
 
     public TWKBWriter setIncludeSize(boolean includeSize) {
-        paramsHeader = paramsHeader.withHasSize(includeSize);
+        paramsHeader = paramsHeader.setHasSize(includeSize);
         return this;
     }
 
     public TWKBWriter setIncludeBbox(boolean includeBbox) {
-        paramsHeader = paramsHeader.withHasBBOX(includeBbox);
+        paramsHeader = paramsHeader.setHasBBOX(includeBbox);
         return this;
     }
 
@@ -172,7 +172,7 @@ public class TWKBWriter {
      * Disabling these optimizations make the encoding consistent with PostGIS TWKB encoding.
      */
     public TWKBWriter setOptimizedEncoding(boolean optimizedEncoding) {
-        paramsHeader = paramsHeader.withOptimizedEncoding(optimizedEncoding);
+        paramsHeader = paramsHeader.setOptimizedEncoding(optimizedEncoding);
         return this;
     }
 
