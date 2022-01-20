@@ -16,6 +16,12 @@
 
     <dependencies>
       <dependency>
+        <groupId>com.sun.xml.bind</groupId>
+        <artifactId>jaxb-impl</artifactId>
+        <version>3.0.0</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>org.projectlombok</groupId>
         <artifactId>lombok</artifactId>
         <scope>provided</scope>

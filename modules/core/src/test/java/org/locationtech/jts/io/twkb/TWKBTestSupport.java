@@ -150,6 +150,6 @@ public class TWKBTestSupport extends ExternalResource {
     }
 
     public String toHexString(byte[] bytes) {
-        return javax.xml.bind.DatatypeConverter.printHexBinary(bytes).toLowerCase();
+        return jakarta.xml.bind.DatatypeConverter.printHexBinary(bytes).toLowerCase();
     }
 }
