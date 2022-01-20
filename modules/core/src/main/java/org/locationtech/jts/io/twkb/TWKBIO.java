@@ -15,11 +15,9 @@ import static org.locationtech.jts.io.twkb.TWKBHeader.GeometryType.POINT;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
-import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Objects;
 
 import org.locationtech.jts.geom.CoordinateSequence;
@@ -35,7 +33,6 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.geom.impl.PackedCoordinateSequenceFactory;
 import org.locationtech.jts.io.twkb.TWKBHeader.GeometryType;
 
 /**
@@ -94,17 +91,6 @@ import org.locationtech.jts.io.twkb.TWKBHeader.GeometryType;
  * </pre>
  */
 class TWKBIO {
-
-    private static GeometryFactory DEFAULT_FACTORY = new GeometryFactory(
-            PackedCoordinateSequenceFactory.DOUBLE_FACTORY);
-
-    public static Geometry read(InputStream in) throws IOException {
-        return read((DataInput) new DataInputStream(in));
-    }
-
-    public static Geometry read(DataInput in) throws IOException {
-        return read(DEFAULT_FACTORY, in);
-    }
 
     public static Geometry read(GeometryFactory factory, DataInput in) throws IOException {
         Objects.requireNonNull(factory, "GeometryFactory is null");

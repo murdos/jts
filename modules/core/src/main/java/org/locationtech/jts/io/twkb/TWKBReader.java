@@ -19,14 +19,18 @@ import java.io.InputStream;
 
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.impl.PackedCoordinateSequenceFactory;
 import org.locationtech.jts.io.ParseException;
 
 public class TWKBReader {
 
+    private static final GeometryFactory DEFAULT_FACTORY = new GeometryFactory(
+        PackedCoordinateSequenceFactory.DOUBLE_FACTORY);
+
     private GeometryFactory geometryFactory;
 
     public TWKBReader() {
-        this(null);
+        this(DEFAULT_FACTORY);
     }
 
     public TWKBReader(GeometryFactory geometryFactory) {
@@ -48,7 +52,7 @@ public class TWKBReader {
 
     public Geometry read(DataInput in) throws ParseException {
         try {
-            return geometryFactory == null ? TWKBIO.read(in) : TWKBIO.read(geometryFactory, in);
+            return TWKBIO.read(geometryFactory, in);
         } catch (IOException ex) {
             throw new ParseException("Unexpected IOException caught: " + ex.getMessage());
         }

@@ -46,6 +46,7 @@ public class TWKBReaderTest {
 
     public @Before void before() {
         reader = new TWKBReader();
+        geomFactory = new GeometryFactory();
     }
 
     public @Test void testZMPrecision() throws ParseException {
