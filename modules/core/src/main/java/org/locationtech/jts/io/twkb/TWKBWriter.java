@@ -11,6 +11,8 @@
  */
 package org.locationtech.jts.io.twkb;
 
+import static org.locationtech.jts.io.twkb.TWKBHeader.GeometryType.POINT;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
@@ -19,11 +21,17 @@ import java.io.OutputStream;
 import java.util.Objects;
 
 import org.locationtech.jts.geom.CoordinateSequence;
+import org.locationtech.jts.geom.CoordinateSequenceFilter;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.LinearRing;
+import org.locationtech.jts.geom.MultiLineString;
+import org.locationtech.jts.geom.MultiPoint;
+import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.io.twkb.TWKBIO.TWKBOutputStream;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.io.twkb.TWKBHeader.GeometryType;
 
 /**
  * <pre>
@@ -197,6 +205,361 @@ public class TWKBWriter {
     final /* @VisibleForTesting */ TWKBHeader writeInternal(Geometry geom, DataOutput out)
             throws IOException {
         Objects.requireNonNull(geom, "geometry is null");
-        return TWKBIO.write(geom, TWKBOutputStream.of(out), paramsHeader);
+        return write(geom, TWKBOutputStream.of(out), paramsHeader);
+    }
+
+    public static void write(Geometry geom, TWKBOutputStream out) throws IOException {
+        write(geom, out, new TWKBHeader());
+    }
+
+    public static TWKBHeader write(Geometry geometry, TWKBOutputStream out, TWKBHeader params)
+        throws IOException {
+        return write(geometry, out, params, false);
+    }
+
+    private static TWKBHeader write(Geometry geometry, TWKBOutputStream out, TWKBHeader params,
+        boolean forcePreserveHeaderDimensions) throws IOException {
+        Objects.requireNonNull(geometry, "Geometry is null");
+        Objects.requireNonNull(out, "DataOutput is null");
+        Objects.requireNonNull(params, "TWKBHeader is null");
+
+        TWKBHeader header = prepareHeader(geometry, new TWKBHeader(params), forcePreserveHeaderDimensions);
+
+        if (header.hasSize()) {
+            BufferedTKWBOutputStream bufferedBody = BufferedTKWBOutputStream.create();
+            writeGeometryBody(geometry, bufferedBody, header);
+            int bodySize = bufferedBody.size();
+            header = header.setGeometryBodySize(bodySize);
+            writeHeaderTo(header, out);
+            bufferedBody.writeTo(out);
+        } else {
+            writeHeaderTo(header, out);
+            writeGeometryBody(geometry, out, header);
+        }
+        return header;
+    }
+
+    static void writeHeaderTo(TWKBHeader header, DataOutput out) throws IOException {
+        writeHeaderTo(header, TWKBOutputStream.of(out));
+    }
+
+    private static void writeHeaderTo(TWKBHeader header, TWKBOutputStream out) throws IOException {
+        Objects.requireNonNull(out);
+        final int typeAndPrecisionHeader;
+        final int metadataHeader;
+        {
+            final int geometryType = header.geometryType().getValue();
+            final int precisionHeader = Varint.zigZagEncode(header.xyPrecision()) << 4;
+            typeAndPrecisionHeader = precisionHeader | geometryType;
+
+            metadataHeader = (header.hasBBOX() ? 0b00000001 : 0) //
+                | (header.hasSize() ? 0b00000010 : 0)//
+                | (header.hasIdList() ? 0b00000100 : 0)//
+                | (header.hasExtendedPrecision() ? 0b00001000 : 0)//
+                | (header.isEmpty() ? 0b00010000 : 0);
+        }
+        out.writeByte(typeAndPrecisionHeader);
+        out.writeByte(metadataHeader);
+        if (header.hasExtendedPrecision()) {
+            // final int extendedDimsHeader = in.readByte() & 0xFF;
+            // hasZ = (extendedDimsHeader & 0b00000001) > 0;
+            // hasM = (extendedDimsHeader & 0b00000010) > 0;
+            // zprecision = (extendedDimsHeader & 0b00011100) >> 2;
+            // mprecision = (extendedDimsHeader & 0b11100000) >> 5;
+
+            int extendedDimsHeader = (header.hasZ() ? 0b00000001 : 0) | (header.hasM() ? 0b00000010 : 0);
+            extendedDimsHeader |= header.zPrecision() << 2;
+            extendedDimsHeader |= header.mPrecision() << 5;
+
+            out.writeByte(extendedDimsHeader);
+        }
+        if (header.hasSize()) {
+            out.writeUnsignedVarInt(header.geometryBodySize());
+        }
+    }
+
+    private static TWKBHeader prepareHeader(Geometry geometry, TWKBHeader params,
+        boolean forcePreserveHeaderDimensions) {
+
+        final boolean isEmpty = geometry.isEmpty();
+        final GeometryType geometryType = GeometryType.valueOf(geometry.getClass());
+        TWKBHeader header = forcePreserveHeaderDimensions ? params
+            : setDimensions(geometry, params);
+        header = header.setEmpty(isEmpty).setGeometryType(geometryType);
+
+        if (params.optimizedEncoding()) {
+            if (isEmpty && header.hasExtendedPrecision()) {
+                header = header.setHasZ(false).setHasM(false);
+            }
+            if ((isEmpty || geometryType == POINT) && header.hasBBOX()) {
+                header = header.setHasBBOX(false);
+            }
+        } else {
+            if (isEmpty && header.hasBBOX()) {
+                header = header.setHasBBOX(false);
+            }
+        }
+        return header;
+    }
+
+    static void writeGeometryBody(Geometry geom, DataOutput out, TWKBHeader header)
+        throws IOException {
+        writeGeometryBody(geom, TWKBOutputStream.of(out), header);
+    }
+
+    static void writeGeometryBody(Geometry geom, TWKBOutputStream out, TWKBHeader header)
+        throws IOException {
+        if (header.isEmpty()) {
+            return;
+        }
+        if (header.hasBBOX()) {
+            writeBbox(geom, out, header);
+        }
+        final GeometryType geometryType = GeometryType.valueOf(geom.getClass());
+        switch (geometryType) {
+            case POINT:
+                writePoint((Point) geom, out, header);
+                return;
+            case LINESTRING:
+                writeLineString((LineString) geom, out, header, new long[header.getDimensions()]);
+                return;
+            case POLYGON:
+                writePolygon((Polygon) geom, out, header, new long[header.getDimensions()]);
+                return;
+            case MULTIPOINT:
+                writeMultiPoint((MultiPoint) geom, out, header);
+                return;
+            case MULTILINESTRING:
+                writeMultiLineString((MultiLineString) geom, out, header);
+                return;
+            case MULTIPOLYGON:
+                writeMultiPolygon((MultiPolygon) geom, out, header);
+                return;
+            case GEOMETRYCOLLECTION:
+                writeGeometryCollection((GeometryCollection) geom, out, header);
+                return;
+            default:
+                break;
+        }
+    }
+
+    private static void writePoint(Point geom, TWKBOutputStream out, TWKBHeader header)
+        throws IOException {
+        assert !geom.isEmpty();
+        CoordinateSequence seq = geom.getCoordinateSequence();
+        int dimensions = header.getDimensions();
+        for (int d = 0; d < dimensions; d++) {
+            writeOrdinate(seq.getOrdinate(0, d), 0L, header.getPrecision(d), out);
+        }
+    }
+
+    private static void writeCoordinateSequence(CoordinateSequence coordinateSequence,
+        TWKBOutputStream out, TWKBHeader header, long[] prev) throws IOException {
+        int size = coordinateSequence.size();
+        out.writeUnsignedVarInt(size);
+        writeCoordinateSequence(coordinateSequence, size, out, header, prev);
+    }
+
+    private static void writeCoordinateSequence(CoordinateSequence coordinateSequence, int size,
+        TWKBOutputStream out, TWKBHeader header, long[] prev) throws IOException {
+
+        final int dimensions = header.getDimensions();
+        for (int coordIndex = 0; coordIndex < size; coordIndex++) {
+            for (int ordinateIndex = 0; ordinateIndex < dimensions; ordinateIndex++) {
+                long previousValue = prev[ordinateIndex];
+                int precision = header.getPrecision(ordinateIndex);
+                double ordinate = coordinateSequence.getOrdinate(coordIndex, ordinateIndex);
+                long preciseOrdinate = writeOrdinate(ordinate, previousValue, precision, out);
+                prev[ordinateIndex] = preciseOrdinate;
+            }
+        }
+    }
+
+    private static long writeOrdinate(double ordinate, long previousOrdinateValue, int precision,
+        TWKBOutputStream out) throws IOException {
+        long preciseOrdinate = makePrecise(ordinate, precision);
+        long delta = preciseOrdinate - previousOrdinateValue;
+        out.writeSignedVarLong(delta);
+        return preciseOrdinate;
+    }
+
+    private static long makePrecise(double value, int precision) {
+        return Math.round(value * Math.pow(10, precision));
+    }
+
+    static void writeLineString(LineString geom, TWKBOutputStream out, TWKBHeader header,
+        long[] prev) throws IOException {
+        writeCoordinateSequence(geom.getCoordinateSequence(), out, header, prev);
+    }
+
+    private static void writePolygon(Polygon geom, TWKBOutputStream out, TWKBHeader header,
+        long[] prev) throws IOException {
+        if (geom.isEmpty()) {
+            out.writeUnsignedVarInt(0);
+            return;
+        }
+        final int numInteriorRing = geom.getNumInteriorRing();
+        final int nrings = 1 + numInteriorRing;
+        out.writeUnsignedVarInt(nrings);
+        writeLinearRing(geom.getExteriorRing(), out, header, prev);
+        for (int r = 0; r < numInteriorRing; r++) {
+            writeLinearRing(geom.getInteriorRingN(r), out, header, prev);
+        }
+    }
+
+    private static void writeLinearRing(LinearRing geom, TWKBOutputStream out, TWKBHeader header,
+        long[] prev) throws IOException {
+        if (geom.isEmpty()) {
+            out.writeUnsignedVarInt(0);
+            return;
+        }
+        CoordinateSequence seq = geom.getCoordinateSequence();
+        int size = seq.size();
+        if (header.optimizedEncoding() && seq.size() > 2) {
+            // With linear rings we can save one coordinate, they're automatically closed at parsing
+            // time. But we can only do that if due to precision lost the two endpoints won't be
+            // equal, otherwise the parser won't know it has to close the linear ring
+            double x1 = seq.getOrdinate(0, 0);
+            double y1 = seq.getOrdinate(0, 1);
+            double x2 = seq.getOrdinate(size - 2, 0);
+            double y2 = seq.getOrdinate(size - 2, 1);
+            int precision = header.getPrecision(0);
+            if (makePrecise(x1, precision) != makePrecise(x2, precision)
+                || makePrecise(y1, precision) != makePrecise(y2, precision)) {
+                --size;
+            }
+        }
+        out.writeUnsignedVarInt(size);
+        writeCoordinateSequence(seq, size, out, header, prev);
+    }
+
+    private static void writeMultiPoint(MultiPoint geom, TWKBOutputStream out, TWKBHeader header)
+        throws IOException {
+        assert !geom.isEmpty();
+
+        CoordinateSequence seq = geom.getFactory().getCoordinateSequenceFactory()
+            .create(geom.getCoordinates());
+        writeCoordinateSequence(seq, out, header, new long[header.getDimensions()]);
+    }
+
+    private static void writeMultiLineString(MultiLineString geom, TWKBOutputStream out,
+        TWKBHeader header) throws IOException {
+        final int size = writeNumGeometries(geom, out);
+        long[] prev = new long[header.getDimensions()];
+        for (int i = 0; i < size; i++) {
+            writeLineString((LineString) geom.getGeometryN(i), out, header, prev);
+        }
+    }
+
+    private static void writeMultiPolygon(MultiPolygon geom, TWKBOutputStream out,
+        TWKBHeader header) throws IOException {
+        final int size = writeNumGeometries(geom, out);
+        long[] prev = new long[header.getDimensions()];
+        for (int i = 0; i < size; i++) {
+            writePolygon((Polygon) geom.getGeometryN(i), out, header, prev);
+        }
+    }
+
+    private static void writeGeometryCollection(GeometryCollection geom, TWKBOutputStream out,
+        TWKBHeader header) throws IOException {
+        final int size = writeNumGeometries(geom, out);
+        for (int i = 0; i < size; i++) {
+            Geometry geometryN = geom.getGeometryN(i);
+            boolean forcePreserveDimensions = geometryN.isEmpty();
+            write(geometryN, out, header, forcePreserveDimensions);
+        }
+    }
+
+    private static int writeNumGeometries(GeometryCollection geom, TWKBOutputStream out)
+        throws IOException {
+        int size = geom.getNumGeometries();
+        out.writeUnsignedVarInt(size);
+        return size;
+    }
+
+    private static void writeBbox(Geometry geom, TWKBOutputStream out, TWKBHeader header)
+        throws IOException {
+        final int dimensions = header.getDimensions();
+        final double[] boundsCoordinates = computeEnvelope(geom, dimensions);
+
+        for (int d = 0; d < dimensions; d++) {
+            final int precision = header.getPrecision(d);
+            double min = boundsCoordinates[2 * d];
+            double max = boundsCoordinates[2 * d + 1];
+            long preciseMin = writeOrdinate(min, 0, precision, out);
+            writeOrdinate(max, preciseMin, precision, out);
+        }
+    }
+
+    private static double[] computeEnvelope(Geometry geom, int dimensions) {
+        BoundsExtractor extractor = new BoundsExtractor(dimensions);
+        geom.apply(extractor);
+        return extractor.ordinates;
+    }
+
+    private static TWKBHeader setDimensions(Geometry g, TWKBHeader header) {
+        if (g.isEmpty()) {
+            return header.setHasZ(false).setHasM(false);
+        }
+        if (g instanceof Point) {
+            return setDimensions(((Point) g).getCoordinateSequence(), header);
+        }
+        if (g instanceof LineString) {
+            return setDimensions(((LineString) g).getCoordinateSequence(), header);
+        }
+        if (g instanceof Polygon) {
+            return setDimensions(((Polygon) g).getExteriorRing().getCoordinateSequence(), header);
+        }
+        return setDimensions(g.getGeometryN(0), header);
+    }
+
+    private static TWKBHeader setDimensions(CoordinateSequence seq, TWKBHeader header) {
+        boolean hasZ = seq.hasZ();
+        boolean hasM = seq.hasM();
+        return header.setHasZ(hasZ).setHasM(hasM);
+    }
+
+    private static class BoundsExtractor implements CoordinateSequenceFilter {
+
+        private final boolean done = false;
+
+        private final boolean geometryChanged = false;
+
+        private final int dimensions;
+
+        double[] ordinates = new double[] { //
+            Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, // note, Double.MIN_VALUE is
+            // positive
+            Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, //
+            Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, //
+            Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY//
+        };
+
+        BoundsExtractor(int dimensions) {
+            this.dimensions = dimensions;
+        }
+
+        public @Override void filter(final CoordinateSequence seq, final int coordIndex) {
+            for (int ordinateIndex = 0; ordinateIndex < dimensions; ordinateIndex++) {
+                final double ordinate = seq.getOrdinate(coordIndex, ordinateIndex);
+                final int minIndex = 2 * ordinateIndex;
+                final int maxIndex = minIndex + 1;
+                double minValue = ordinates[minIndex];
+                double maxValue = ordinates[maxIndex];
+                minValue = Math.min(minValue, ordinate);
+                maxValue = ordinate > maxValue ? ordinate : maxValue;// Math.max(maxValue,
+                // ordinate);
+                ordinates[minIndex] = minValue;
+                ordinates[maxIndex] = maxValue;
+            }
+        }
+
+        public boolean isDone() {
+            return this.done;
+        }
+
+        public boolean isGeometryChanged() {
+            return this.geometryChanged;
+        }
     }
 }

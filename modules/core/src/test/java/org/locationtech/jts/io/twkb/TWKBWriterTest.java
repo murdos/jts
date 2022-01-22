@@ -277,7 +277,7 @@ public class TWKBWriterTest {
                 TWKBHeader resultHeader = writer.writeInternal(geom,
                         (DataOutput) new DataOutputStream(new ByteArrayOutputStream()));
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
-                resultHeader.writeTo(new DataOutputStream(out));
+                TWKBWriter.writeHeaderTo(resultHeader, new DataOutputStream(out));
                 log("header  : %s", testSupport.toHexString(out.toByteArray()));
             } catch (IOException e) {
                 throw new RuntimeException(e);

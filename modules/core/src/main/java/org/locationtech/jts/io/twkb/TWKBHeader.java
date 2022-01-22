@@ -11,9 +11,6 @@
  */
 package org.locationtech.jts.io.twkb;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -26,7 +23,6 @@ import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.io.twkb.TWKBIO.TWKBOutputStream;
 
 /**
  * <pre>
@@ -357,103 +353,6 @@ class TWKBHeader {
         default:
             throw new IllegalArgumentException(
                     "Dimension index shall be between 0 and 3: " + dimensionIndex);
-        }
-    }
-
-    public static TWKBHeader read(DataInput in) throws IOException {
-        Objects.requireNonNull(in);
-        // first 1-byte header //
-        final int typeAndPrecisionHeader = in.readByte() & 0xFF;
-        final int geometryTypeCode = typeAndPrecisionHeader & 0b00001111;
-        final GeometryType geometryType = GeometryType.valueOf(geometryTypeCode);
-        final int precision = Varint.zigzagDecode((typeAndPrecisionHeader & 0b11110000) >> 4);
-        // metadata_header := byte
-        // bbox_flag := 0b00000001
-        // size_flag := 0b00000010
-        // idlist_flag := 0b00000100
-        // extended_precision_flag := 0b00001000
-        // empty_geometry_flag := 0b00010000
-        final int metadata_header = in.readByte() & 0xFF;
-        final boolean hasBBOX = (metadata_header & 0b00000001) > 0;
-        final boolean hasSize = (metadata_header & 0b00000010) > 0;
-        final boolean hasIdList = (metadata_header & 0b00000100) > 0;
-        final boolean hasExtendedPrecision = (metadata_header & 0b00001000) > 0;
-        final boolean isEmpty = (metadata_header & 0b00010000) > 0;
-
-        // extended_dimensions_header present iif extended_precision_flag == 1
-        // extended_dimensions_header := byte
-        // Z_dimension_presence_flag := 0b00000001
-        // M_dimension_presence_flag := 0b00000010
-        // Z_precision := 0b000XXX00 3-bit unsigned integer using bits 3-5
-        // M_precision := 0bXXX00000 3-bit unsigned integer using bits 6-8
-        boolean hasZ = false;
-        boolean hasM = false;
-        int zprecision = 0;
-        int mprecision = 0;
-        if (hasExtendedPrecision) {
-            final int extendedDimsHeader = in.readByte() & 0xFF;
-            hasZ = (extendedDimsHeader & 0b00000001) > 0;
-            hasM = (extendedDimsHeader & 0b00000010) > 0;
-            zprecision = (extendedDimsHeader & 0b00011100) >> 2;
-            mprecision = (extendedDimsHeader & 0b11100000) >> 5;
-        }
-
-        // # geometry_body_size present iif size_flag == 1
-        // geometry_body_size := uint32 # size in bytes of <geometry_body>
-        int geometryBodySize = -1;
-        if (hasSize) {
-            geometryBodySize = Varint.readUnsignedVarInt(in);
-        }
-        return new TWKBHeader()//
-                .setGeometryType(geometryType)//
-                .setXyPrecision(precision)//
-                .setHasZ(hasZ)
-                .setZPrecision(zprecision)//
-                .setHasM(hasM)
-                .setMPrecision(mprecision)//
-                .setHasIdList(hasIdList)//
-                .setEmpty(isEmpty)//
-                .setHasSize(hasSize)//
-                .setHasBBOX(hasBBOX)//
-                .setGeometryBodySize(geometryBodySize);
-    }
-
-    public void writeTo(DataOutput out) throws IOException {
-        writeTo(TWKBOutputStream.of(out));
-    }
-
-    void writeTo(TWKBOutputStream out) throws IOException {
-        Objects.requireNonNull(out);
-        final int typeAndPrecisionHeader;
-        final int metadataHeader;
-        {
-            final int geometryType = this.geometryType.getValue();
-            final int precisionHeader = Varint.zigZagEncode(this.xyPrecision) << 4;
-            typeAndPrecisionHeader = precisionHeader | geometryType;
-
-            metadataHeader = (hasBBOX ? 0b00000001 : 0) //
-                    | (hasSize ? 0b00000010 : 0)//
-                    | (hasIdList ? 0b00000100 : 0)//
-                    | (hasExtendedPrecision() ? 0b00001000 : 0)//
-                    | (isEmpty ? 0b00010000 : 0);
-        }
-        out.writeByte(typeAndPrecisionHeader);
-        out.writeByte(metadataHeader);
-        if (hasExtendedPrecision()) {
-            // final int extendedDimsHeader = in.readByte() & 0xFF;
-            // hasZ = (extendedDimsHeader & 0b00000001) > 0;
-            // hasM = (extendedDimsHeader & 0b00000010) > 0;
-            // zprecision = (extendedDimsHeader & 0b00011100) >> 2;
-            // mprecision = (extendedDimsHeader & 0b11100000) >> 5;
-
-            int extendedDimsHeader = (hasZ ? 0b00000001 : 0) | (hasM ? 0b00000010 : 0);
-            extendedDimsHeader |= zPrecision << 2;
-            extendedDimsHeader |= mPrecision << 5;
-
-            out.writeByte(extendedDimsHeader);
-        }
-        if (hasSize) {
-            out.writeUnsignedVarInt(this.geometryBodySize);
         }
     }
 
