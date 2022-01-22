@@ -16,12 +16,6 @@
 
     <dependencies>
       <dependency>
-        <groupId>com.sun.xml.bind</groupId>
-        <artifactId>jaxb-impl</artifactId>
-        <version>3.0.0</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
           <groupId>org.apache.commons</groupId>
           <artifactId>commons-csv</artifactId>
           <scope>test</scope>

@@ -251,6 +251,10 @@ public class TWKBTestSupport extends ExternalResource {
     }
 
     public String toHexString(byte[] bytes) {
-        return jakarta.xml.bind.DatatypeConverter.printHexBinary(bytes).toLowerCase();
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 }
