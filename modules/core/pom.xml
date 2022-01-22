@@ -22,11 +22,6 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>org.projectlombok</groupId>
-        <artifactId>lombok</artifactId>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
           <groupId>org.apache.commons</groupId>
           <artifactId>commons-csv</artifactId>
           <scope>test</scope>

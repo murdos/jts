@@ -123,7 +123,7 @@ public class TWKBReadWriteTest {
 
     private void testWriteRead(List<TWKBTestData> pointsTestData) throws ParseException {
         for (TWKBTestData record : pointsTestData) {
-            TWKBTestData withSize = record.withIncludeSize(true);
+            TWKBTestData withSize = new TWKBTestData(record).setIncludeSize(true);
             boolean optimizedEncoding = true;
             boolean postgisCompatibleEncoding = false;
 
