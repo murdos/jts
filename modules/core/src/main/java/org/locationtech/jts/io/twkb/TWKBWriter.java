@@ -91,9 +91,6 @@ public class TWKBWriter {
 
     private TWKBHeader paramsHeader = new TWKBHeader();
 
-    public TWKBWriter() {
-    }
-
     /**
      * Number of base-10 decimal places stored.
      * <p>
@@ -208,11 +205,7 @@ public class TWKBWriter {
         return write(geom, TWKBOutputStream.of(out), paramsHeader);
     }
 
-    public static void write(Geometry geom, TWKBOutputStream out) throws IOException {
-        write(geom, out, new TWKBHeader());
-    }
-
-    public static TWKBHeader write(Geometry geometry, TWKBOutputStream out, TWKBHeader params)
+    private static TWKBHeader write(Geometry geometry, TWKBOutputStream out, TWKBHeader params)
         throws IOException {
         return write(geometry, out, params, false);
     }
@@ -302,11 +295,6 @@ public class TWKBWriter {
         return header;
     }
 
-    static void writeGeometryBody(Geometry geom, DataOutput out, TWKBHeader header)
-        throws IOException {
-        writeGeometryBody(geom, TWKBOutputStream.of(out), header);
-    }
-
     static void writeGeometryBody(Geometry geom, TWKBOutputStream out, TWKBHeader header)
         throws IOException {
         if (header.isEmpty()) {
@@ -387,7 +375,7 @@ public class TWKBWriter {
         return Math.round(value * Math.pow(10, precision));
     }
 
-    static void writeLineString(LineString geom, TWKBOutputStream out, TWKBHeader header,
+    private static void writeLineString(LineString geom, TWKBOutputStream out, TWKBHeader header,
         long[] prev) throws IOException {
         writeCoordinateSequence(geom.getCoordinateSequence(), out, header, prev);
     }
@@ -528,8 +516,7 @@ public class TWKBWriter {
         private final int dimensions;
 
         double[] ordinates = new double[] { //
-            Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, // note, Double.MIN_VALUE is
-            // positive
+            Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, // note, Double.MIN_VALUE is positive
             Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, //
             Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, //
             Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY//
@@ -547,17 +534,18 @@ public class TWKBWriter {
                 double minValue = ordinates[minIndex];
                 double maxValue = ordinates[maxIndex];
                 minValue = Math.min(minValue, ordinate);
-                maxValue = ordinate > maxValue ? ordinate : maxValue;// Math.max(maxValue,
-                // ordinate);
+                maxValue = ordinate > maxValue ? ordinate : maxValue;// Math.max(maxValue, ordinate);
                 ordinates[minIndex] = minValue;
                 ordinates[maxIndex] = maxValue;
             }
         }
 
+        @Override
         public boolean isDone() {
             return this.done;
         }
 
+        @Override
         public boolean isGeometryChanged() {
             return this.geometryChanged;
         }
