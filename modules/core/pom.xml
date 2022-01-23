@@ -14,14 +14,6 @@
         <doclint>none</doclint>
     </properties>
 
-    <dependencies>
-      <dependency>
-          <groupId>org.apache.commons</groupId>
-          <artifactId>commons-csv</artifactId>
-          <scope>test</scope>
-      </dependency>
-    </dependencies>
-
     <build>
         <plugins>
             <plugin>
