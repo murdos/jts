@@ -89,12 +89,15 @@ import org.locationtech.jts.io.twkb.TWKBHeader.GeometryType;
  */
 public class TWKBWriter {
 
-    private TWKBHeader paramsHeader = new TWKBHeader();
+    private TWKBHeader paramsHeader = new TWKBHeader()
+        .setXyPrecision(7)
+        .setZPrecision(0)
+        .setMPrecision(0);
 
     private boolean optimizedEncoding = true;
 
     /**
-     * Number of base-10 decimal places stored.
+     * Number of base-10 decimal places stored for X and Y dimensions.
      * <p>
      * A positive retaining information to the right of the decimal place, negative rounding up to
      * the left of the decimal place).
@@ -120,6 +123,14 @@ public class TWKBWriter {
         return this;
     }
 
+    /**
+     * Number of base-10 decimal places stored for Z dimension.
+     * <p>
+     * A positive retaining information to the right of the decimal place, negative rounding up to
+     * the left of the decimal place).
+     * <p>
+     * Defaults to {@code 0}
+     */
     public TWKBWriter setZPrecision(int zprecision) {
         if (zprecision < 0 || zprecision > 7) {
             throw new IllegalArgumentException("Z precision cannot be negative or greater than 7");
@@ -128,6 +139,14 @@ public class TWKBWriter {
         return this;
     }
 
+    /**
+     * Number of base-10 decimal places stored for M dimension.
+     * <p>
+     * A positive retaining information to the right of the decimal place, negative rounding up to
+     * the left of the decimal place).
+     * <p>
+     * Defaults to {@code 0}
+     */
     public TWKBWriter setMPrecision(int mprecision) {
         if (mprecision < 0 || mprecision > 7) {
             throw new IllegalArgumentException("M precision cannot be negative or greater than 7");
@@ -136,11 +155,17 @@ public class TWKBWriter {
         return this;
     }
 
+    /**
+     * Whether the generated TWKB should include the size in bytes of the geometry.
+     */
     public TWKBWriter setIncludeSize(boolean includeSize) {
         paramsHeader = paramsHeader.setHasSize(includeSize);
         return this;
     }
 
+    /**
+     * Whether the generated TWKB should include a Bounding Box for the geometry.
+     */
     public TWKBWriter setIncludeBbox(boolean includeBbox) {
         paramsHeader = paramsHeader.setHasBBOX(includeBbox);
         return this;
