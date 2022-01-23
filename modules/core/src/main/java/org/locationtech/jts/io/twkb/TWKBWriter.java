@@ -91,6 +91,8 @@ public class TWKBWriter {
 
     private TWKBHeader paramsHeader = new TWKBHeader();
 
+    private boolean optimizedEncoding = true;
+
     /**
      * Number of base-10 decimal places stored.
      * <p>
@@ -148,18 +150,18 @@ public class TWKBWriter {
      * Enables or disables the following optimizations at encoding time, defaults to {@code true}:
      * <ul>
      * <li>The {@code xy}, {@code m}, and {@code z} precision of an {@link Geometry#isEmpty() empty}
-     * geometry are set to {@code 0}, despite the values of {@link #xyPrecision()},
-     * {@link #zPrecision()}, and {@link #mPrecision()}
-     * <li>BBOX is not encoded for {@link Point} geometries, despite {@link #hasBBOX()} being
+     * geometry are set to {@code 0}, despite the values of {@link #setXYPrecision(int)},
+     * {@link #setZPrecision(int)}, and {@link #setMPrecision(int)}
+     * <li>BBOX is not encoded for {@link Point} geometries, despite {@link #setIncludeBbox(boolean)} being
      * {@code true}, and the {@code hasBBOX} flag is encoded as {@code false}
-     * <li>{@link #hasZ()} is forcedly encoded as {@code false} if the input geometry has no Z
+     * <li>{@link TWKBHeader#hasZ()} is forcedly encoded as {@code false} if the input geometry has no Z
      * dimension (as per {@link CoordinateSequence#hasZ()}), even if {@code hasZ() == true}, and
-     * consequently {@link #zPrecision()} is not set (defaulting to 0 if there's an M dimension).
+     * consequently {@link TWKBHeader#zPrecision()} is not set (defaulting to 0 if there's an M dimension).
      * This fixes a possible mismatch in the metadata where a dimension precision may be present in
      * the header where the geometry doesn't really have that dimension.
-     * <li>{@link #hasM()} is forcedly encoded as {@code false} if the input geometry has no M
+     * <li>{@link TWKBHeader#hasM()} is forcedly encoded as {@code false} if the input geometry has no M
      * dimension (as per {@link CoordinateSequence#hasM()}), even if {@code hasM() == true}, and
-     * consequently {@link #mPrecision()} is not set (defaulting to 0 if there's a Z dimension).
+     * consequently {@link TWKBHeader#mPrecision()} is not set (defaulting to 0 if there's a Z dimension).
      * This fixes a possible mismatch in the metadata where a dimension precision may be present in
      * the header where the geometry doesn't really have that dimension.
      * <li>For a <strong>Polygon</strong> geometry, all its {@link LinearRing}s get their last
@@ -177,7 +179,7 @@ public class TWKBWriter {
      * Disabling these optimizations make the encoding consistent with PostGIS TWKB encoding.
      */
     public TWKBWriter setOptimizedEncoding(boolean optimizedEncoding) {
-        paramsHeader = paramsHeader.setOptimizedEncoding(optimizedEncoding);
+        this.optimizedEncoding = optimizedEncoding;
         return this;
     }
 
@@ -205,12 +207,12 @@ public class TWKBWriter {
         return write(geom, TWKBOutputStream.of(out), paramsHeader);
     }
 
-    private static TWKBHeader write(Geometry geometry, TWKBOutputStream out, TWKBHeader params)
+    private TWKBHeader write(Geometry geometry, TWKBOutputStream out, TWKBHeader params)
         throws IOException {
         return write(geometry, out, params, false);
     }
 
-    private static TWKBHeader write(Geometry geometry, TWKBOutputStream out, TWKBHeader params,
+    private TWKBHeader write(Geometry geometry, TWKBOutputStream out, TWKBHeader params,
         boolean forcePreserveHeaderDimensions) throws IOException {
         Objects.requireNonNull(geometry, "Geometry is null");
         Objects.requireNonNull(out, "DataOutput is null");
@@ -271,7 +273,7 @@ public class TWKBWriter {
         }
     }
 
-    private static TWKBHeader prepareHeader(Geometry geometry, TWKBHeader params,
+    private TWKBHeader prepareHeader(Geometry geometry, TWKBHeader params,
         boolean forcePreserveHeaderDimensions) {
 
         final boolean isEmpty = geometry.isEmpty();
@@ -280,7 +282,7 @@ public class TWKBWriter {
             : setDimensions(geometry, params);
         header = header.setEmpty(isEmpty).setGeometryType(geometryType);
 
-        if (params.optimizedEncoding()) {
+        if (optimizedEncoding) {
             if (isEmpty && header.hasExtendedPrecision()) {
                 header = header.setHasZ(false).setHasM(false);
             }
@@ -295,7 +297,7 @@ public class TWKBWriter {
         return header;
     }
 
-    static void writeGeometryBody(Geometry geom, TWKBOutputStream out, TWKBHeader header)
+    private void writeGeometryBody(Geometry geom, TWKBOutputStream out, TWKBHeader header)
         throws IOException {
         if (header.isEmpty()) {
             return;
@@ -331,7 +333,7 @@ public class TWKBWriter {
         }
     }
 
-    private static void writePoint(Point geom, TWKBOutputStream out, TWKBHeader header)
+    private void writePoint(Point geom, TWKBOutputStream out, TWKBHeader header)
         throws IOException {
         assert !geom.isEmpty();
         CoordinateSequence seq = geom.getCoordinateSequence();
@@ -341,14 +343,14 @@ public class TWKBWriter {
         }
     }
 
-    private static void writeCoordinateSequence(CoordinateSequence coordinateSequence,
+    private void writeCoordinateSequence(CoordinateSequence coordinateSequence,
         TWKBOutputStream out, TWKBHeader header, long[] prev) throws IOException {
         int size = coordinateSequence.size();
         out.writeUnsignedVarInt(size);
         writeCoordinateSequence(coordinateSequence, size, out, header, prev);
     }
 
-    private static void writeCoordinateSequence(CoordinateSequence coordinateSequence, int size,
+    private void writeCoordinateSequence(CoordinateSequence coordinateSequence, int size,
         TWKBOutputStream out, TWKBHeader header, long[] prev) throws IOException {
 
         final int dimensions = header.getDimensions();
@@ -363,7 +365,7 @@ public class TWKBWriter {
         }
     }
 
-    private static long writeOrdinate(double ordinate, long previousOrdinateValue, int precision,
+    private long writeOrdinate(double ordinate, long previousOrdinateValue, int precision,
         TWKBOutputStream out) throws IOException {
         long preciseOrdinate = makePrecise(ordinate, precision);
         long delta = preciseOrdinate - previousOrdinateValue;
@@ -371,16 +373,16 @@ public class TWKBWriter {
         return preciseOrdinate;
     }
 
-    private static long makePrecise(double value, int precision) {
+    private long makePrecise(double value, int precision) {
         return Math.round(value * Math.pow(10, precision));
     }
 
-    private static void writeLineString(LineString geom, TWKBOutputStream out, TWKBHeader header,
+    private void writeLineString(LineString geom, TWKBOutputStream out, TWKBHeader header,
         long[] prev) throws IOException {
         writeCoordinateSequence(geom.getCoordinateSequence(), out, header, prev);
     }
 
-    private static void writePolygon(Polygon geom, TWKBOutputStream out, TWKBHeader header,
+    private void writePolygon(Polygon geom, TWKBOutputStream out, TWKBHeader header,
         long[] prev) throws IOException {
         if (geom.isEmpty()) {
             out.writeUnsignedVarInt(0);
@@ -395,7 +397,7 @@ public class TWKBWriter {
         }
     }
 
-    private static void writeLinearRing(LinearRing geom, TWKBOutputStream out, TWKBHeader header,
+    private void writeLinearRing(LinearRing geom, TWKBOutputStream out, TWKBHeader header,
         long[] prev) throws IOException {
         if (geom.isEmpty()) {
             out.writeUnsignedVarInt(0);
@@ -403,7 +405,7 @@ public class TWKBWriter {
         }
         CoordinateSequence seq = geom.getCoordinateSequence();
         int size = seq.size();
-        if (header.optimizedEncoding() && seq.size() > 2) {
+        if (optimizedEncoding && seq.size() > 2) {
             // With linear rings we can save one coordinate, they're automatically closed at parsing
             // time. But we can only do that if due to precision lost the two endpoints won't be
             // equal, otherwise the parser won't know it has to close the linear ring
@@ -421,7 +423,7 @@ public class TWKBWriter {
         writeCoordinateSequence(seq, size, out, header, prev);
     }
 
-    private static void writeMultiPoint(MultiPoint geom, TWKBOutputStream out, TWKBHeader header)
+    private void writeMultiPoint(MultiPoint geom, TWKBOutputStream out, TWKBHeader header)
         throws IOException {
         assert !geom.isEmpty();
 
@@ -430,7 +432,7 @@ public class TWKBWriter {
         writeCoordinateSequence(seq, out, header, new long[header.getDimensions()]);
     }
 
-    private static void writeMultiLineString(MultiLineString geom, TWKBOutputStream out,
+    private void writeMultiLineString(MultiLineString geom, TWKBOutputStream out,
         TWKBHeader header) throws IOException {
         final int size = writeNumGeometries(geom, out);
         long[] prev = new long[header.getDimensions()];
@@ -439,7 +441,7 @@ public class TWKBWriter {
         }
     }
 
-    private static void writeMultiPolygon(MultiPolygon geom, TWKBOutputStream out,
+    private void writeMultiPolygon(MultiPolygon geom, TWKBOutputStream out,
         TWKBHeader header) throws IOException {
         final int size = writeNumGeometries(geom, out);
         long[] prev = new long[header.getDimensions()];
@@ -448,7 +450,7 @@ public class TWKBWriter {
         }
     }
 
-    private static void writeGeometryCollection(GeometryCollection geom, TWKBOutputStream out,
+    private void writeGeometryCollection(GeometryCollection geom, TWKBOutputStream out,
         TWKBHeader header) throws IOException {
         final int size = writeNumGeometries(geom, out);
         for (int i = 0; i < size; i++) {
@@ -458,14 +460,14 @@ public class TWKBWriter {
         }
     }
 
-    private static int writeNumGeometries(GeometryCollection geom, TWKBOutputStream out)
+    private int writeNumGeometries(GeometryCollection geom, TWKBOutputStream out)
         throws IOException {
         int size = geom.getNumGeometries();
         out.writeUnsignedVarInt(size);
         return size;
     }
 
-    private static void writeBbox(Geometry geom, TWKBOutputStream out, TWKBHeader header)
+    private void writeBbox(Geometry geom, TWKBOutputStream out, TWKBHeader header)
         throws IOException {
         final int dimensions = header.getDimensions();
         final double[] boundsCoordinates = computeEnvelope(geom, dimensions);

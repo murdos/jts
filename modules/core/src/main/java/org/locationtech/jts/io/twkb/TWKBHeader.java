@@ -36,7 +36,7 @@ import org.locationtech.jts.geom.Polygon;
  * precision               := <signed byte> (zig-zag encoded 4-bit signed integer, 0bXXXX0000. Number of base-10 decimal places 
  *                                           stored. A positive retaining information to the right of the decimal place, negative 
  *                                           rounding up to the left of the decimal place)  
- * metadata_header := byte := <bbox_flag OR  size_flag OR idlist_flag OR extended_precision_flag OR empty_geometry_flag>
+ * metadata_header := byte := <bbox_flag OR size_flag OR idlist_flag OR extended_precision_flag OR empty_geometry_flag>
  * bbox_flag               := 0b00000001
  * size_flag               := 0b00000010
  * idlist_flag             := 0b00000100
@@ -96,7 +96,6 @@ class TWKBHeader {
         this.zPrecision = other.zPrecision;
         this.mPrecision = other.mPrecision;
         this.geometryBodySize = other.geometryBodySize;
-        this.optimizedEncoding = other.optimizedEncoding;
     }
 
     public GeometryType geometryType() {
@@ -137,10 +136,6 @@ class TWKBHeader {
 
     public int mPrecision() {
         return this.mPrecision;
-    }
-
-    public boolean optimizedEncoding() {
-        return this.optimizedEncoding;
     }
 
     public TWKBHeader setGeometryType(GeometryType geometryType) {
@@ -198,11 +193,6 @@ class TWKBHeader {
         return this;
     }
 
-    public TWKBHeader setOptimizedEncoding(boolean optimizedEncoding) {
-        this.optimizedEncoding = optimizedEncoding;
-        return this;
-    }
-
     @Override
     public String toString() {
         return "TWKBHeader{" +
@@ -217,7 +207,6 @@ class TWKBHeader {
             ", zPrecision=" + zPrecision +
             ", mPrecision=" + mPrecision +
             ", geometryBodySize=" + geometryBodySize +
-            ", optimizedEncoding=" + optimizedEncoding +
             '}';
     }
 
@@ -327,9 +316,6 @@ class TWKBHeader {
     private int geometryBodySize;
 
     /////////////////////// custom optimizations ///////////////////////
-
-    // See TWKBWriter.setOptimizedEncoding for a description of this flag
-    private boolean optimizedEncoding = true;
 
     public int getDimensions() {
         return 2 + (hasZ ? 1 : 0) + (hasM ? 1 : 0);
