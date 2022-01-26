@@ -1,7 +1,7 @@
-CREATE OR REPLACE FUNCTION generate_twkb_test_data(arr text[]) 
-RETURNS TABLE (input_wkt TEXT, xyprecision INT, zprecision INT, mprecision INT, withsize TEXT, withbbox TEXT, expected_wkt TEXT, expected_twkb TEXT) 
+CREATE OR REPLACE FUNCTION generate_twkb_test_data(arr text[])
+RETURNS TABLE (input_wkt TEXT, xyprecision INT, zprecision INT, mprecision INT, withsize TEXT, withbbox TEXT, expected_wkt TEXT, expected_twkb TEXT)
 AS $$
-DECLARE 
+DECLARE
 	inputwkt TEXT;
 	xy INT;
 	z INT;
@@ -13,18 +13,18 @@ DECLARE
 BEGIN
 
 	CREATE TEMPORARY TABLE td (
-  		input_wkt TEXT NOT NULL, 
-  		xyprecision INT NOT NULL, 
-  		zprecision INT NOT NULL, 
-  		mprecision INT NOT NULL, 
-  		withsize TEXT NOT NULL, 
-  		withbbox TEXT NOT NULL, 
-  		expected_wkt TEXT NOT NULL, 
+  		input_wkt TEXT NOT NULL,
+  		xyprecision INT NOT NULL,
+  		zprecision INT NOT NULL,
+  		mprecision INT NOT NULL,
+  		withsize TEXT NOT NULL,
+  		withbbox TEXT NOT NULL,
+  		expected_wkt TEXT NOT NULL,
   		expected_twkb TEXT UNIQUE NOT NULL);
-  
+
    	withbbox = FALSE;
    	withsize = FALSE;
-  
+
    FOREACH inputwkt IN ARRAY arr
    LOOP
    	FOR xy IN -7..7 LOOP
@@ -34,8 +34,8 @@ BEGIN
 			   	 	FOR withbbox IN 0..1 LOOP
 						expected_twkb = encode(ST_AsTWKB(inputwkt::geometry, xy, z, m, withsize::boolean, withbbox::boolean), 'hex');
 						expected_wkt = ST_AsText(ST_GeomFromTWKB(decode(expected_twkb, 'hex')));
-						INSERT INTO td VALUES(inputwkt, xy, z, m, 
-											  CASE WHEN withsize::boolean = TRUE THEN 'true' ELSE 'false' END, 
+						INSERT INTO td VALUES(inputwkt, xy, z, m,
+											  CASE WHEN withsize::boolean = TRUE THEN 'true' ELSE 'false' END,
 											  CASE WHEN withbbox::boolean = TRUE THEN 'true' ELSE 'false' END,
 											  expected_wkt, expected_twkb)
 									   ON CONFLICT DO NOTHING;
@@ -59,7 +59,8 @@ COPY (SELECT * FROM generate_twkb_test_data(ARRAY[
 			'POINT M(12345678.12345678 -12345678.12345678 9.87654321)',
 			'POINT ZM(12345678.12345678 -12345678.12345678 0.12345678 9.87654321)'
 		])
-	 ) TO '/tmp/points.csv' WITH (FORMAT CSV, HEADER, DELIMITER '|');
+ ORDER BY input_wkt, xyprecision, zprecision, mprecision, withsize, withbbox
+ ) TO '/tmp/points.csv' WITH (FORMAT CSV, HEADER, DELIMITER '|');
 
 COPY (SELECT * FROM generate_twkb_test_data(ARRAY[
 		'LINESTRING (12345678.12345678 -12345678.12345678, 87654321.87654321 -87654321.87654321)',
@@ -67,6 +68,7 @@ COPY (SELECT * FROM generate_twkb_test_data(ARRAY[
 		'LINESTRING M(12345678.12345678 -12345678.12345678 9.87654321, 87654321.87654321 -87654321.87654321 8.87654321)',
 		'LINESTRING ZM(12345678.12345678 -12345678.12345678 0.12345678 9.87654321, 87654321.87654321 -87654321.87654321 1.12345678 8.87654321)'
 	])
+ ORDER BY input_wkt, xyprecision, zprecision, mprecision, withsize, withbbox
  ) TO '/tmp/linestrings.csv' WITH (FORMAT CSV, HEADER, DELIMITER '|');
 
 COPY (SELECT * FROM generate_twkb_test_data(ARRAY[
@@ -75,6 +77,7 @@ COPY (SELECT * FROM generate_twkb_test_data(ARRAY[
 		'POLYGON M((0 0 2,0 10 4,10 10 6,0 0 2),(1 1 0.9,1 2 1.9,2 2 2.9,2 1 3.9,1 1 0.9))',
 		'POLYGON ZM((0 0 1 2,0 10 3 4,10 10 5 6,0 0 1 2),(1 1 9 9,1 2 9 9,2 2 9 9,2 1 9 9,1 1 9 9))'
 	])
+ ORDER BY input_wkt, xyprecision, zprecision, mprecision, withsize, withbbox
  ) TO '/tmp/polygons.csv' WITH (FORMAT CSV, HEADER, DELIMITER '|');
 
 COPY (SELECT * FROM generate_twkb_test_data(ARRAY[
@@ -83,6 +86,7 @@ COPY (SELECT * FROM generate_twkb_test_data(ARRAY[
 		'MULTIPOINT M(12345678.12345678 -12345678.12345678 1e-8,-1 1 2,10 10 6)',
 		'MULTIPOINT ZM(12345678.12345678 -12345678.12345678 1e8 1e-8,-1 1 -1 2,10 10 5 6)'
 	])
+ ORDER BY input_wkt, xyprecision, zprecision, mprecision, withsize, withbbox
  ) TO '/tmp/multipoints.csv' WITH (FORMAT CSV, HEADER, DELIMITER '|');
 
 COPY (SELECT * FROM generate_twkb_test_data(ARRAY[
@@ -91,6 +95,7 @@ COPY (SELECT * FROM generate_twkb_test_data(ARRAY[
 		'MULTILINESTRING M((1 1 1, 9 10 12),EMPTY,(7787.60977606 5723.96163229 5.02,7788.25094530 5724.26827888 9.02))',
 		'MULTILINESTRING ZM((1 1 1 1, 9 10 11 12),EMPTY,(7787.60977606 5723.96163229 7.6 5.02,7788.25094530 5724.26827888 8.6 9.02))'
 	])
+ ORDER BY input_wkt, xyprecision, zprecision, mprecision, withsize, withbbox
  ) TO '/tmp/multilinestrings.csv' WITH (FORMAT CSV, HEADER, DELIMITER '|');
 
 COPY (SELECT * FROM generate_twkb_test_data(ARRAY[
@@ -99,6 +104,7 @@ COPY (SELECT * FROM generate_twkb_test_data(ARRAY[
 		'MULTIPOLYGON M(((0 0 2,0 10 4,10 10 6,0 0 2),(1 1 9,1 2 9,2 2 9,2 1 9,1 1 9)),EMPTY,((1 1 8, -1 -1 6, 5 5 4, 1 1 2)))',
 		'MULTIPOLYGON ZM(((0 0 1 2,0 10 3 4,10 10 5 6,0 0 1 2),(1 1 9 9,1 2 9 9,2 2 9 9,2 1 9 9,1 1 9 9)),EMPTY,((1 1 9 8, -1 -1 7 6, 5 5 5 4, 1 1 3 2)))'
 	])
+ ORDER BY input_wkt, xyprecision, zprecision, mprecision, withsize, withbbox
  ) TO '/tmp/multipolygons.csv' WITH (FORMAT CSV, HEADER, DELIMITER '|');
 
 COPY (SELECT * FROM generate_twkb_test_data(ARRAY[
@@ -107,4 +113,5 @@ COPY (SELECT * FROM generate_twkb_test_data(ARRAY[
 		'GEOMETRYCOLLECTION M(MULTIPOLYGON M(((0 0 2,0 10 4,10 10 6,0 0 2))),LINESTRING EMPTY, POINT M(3 4 6))',
 		'GEOMETRYCOLLECTION ZM(MULTIPOLYGON ZM(((0 0 1 2,0 10 3 4,10 10 5 6,0 0 1 2))),LINESTRING EMPTY, POINT ZM(3 4 5 6))'
 	])
+ ORDER BY input_wkt, xyprecision, zprecision, mprecision, withsize, withbbox
  ) TO '/tmp/geometrycollections.csv' WITH (FORMAT CSV, HEADER, DELIMITER '|');
