@@ -225,7 +225,6 @@ public class TWKBTestSupport extends ExternalResource {
         boolean includeSize = Boolean.parseBoolean(record.get("withsize"));
         boolean includeBbox = Boolean.parseBoolean(record.get("withbbox"));
         String expectedTWKBHex = record.get("expected_twkb");
-        expectedTWKBHex = expectedTWKBHex.replaceAll("\\\\x", "");
         byte[] expectedTWKB = WKBReader.hexToBytes(expectedTWKBHex);
         Geometry expectedGeometry = parseWKT(record.get("expected_wkt"));
 

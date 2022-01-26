@@ -9,7 +9,7 @@ DECLARE
 	withsize BOOLEAN;
 	withbbox BOOLEAN;
 	expected_wkt TEXT;
-	expected_twkb bytea;
+	expected_twkb TEXT;
 BEGIN
 
 	CREATE TEMPORARY TABLE td (
@@ -32,8 +32,8 @@ BEGIN
 		   	FOR m IN 0..7 LOOP
 		   	     --FOR withsize IN 0..1 LOOP
 			   	 	FOR withbbox IN 0..1 LOOP
-						expected_twkb = ST_AsTWKB(inputwkt::geometry, xy, z, m, withsize::boolean, withbbox::boolean);
-						expected_wkt = ST_AsText(ST_GeomFromTWKB(expected_twkb));
+						expected_twkb = encode(ST_AsTWKB(inputwkt::geometry, xy, z, m, withsize::boolean, withbbox::boolean), 'hex');
+						expected_wkt = ST_AsText(ST_GeomFromTWKB(decode(expected_twkb, 'hex')));
 						INSERT INTO td VALUES(inputwkt, xy, z, m, 
 											  CASE WHEN withsize::boolean = TRUE THEN 'true' ELSE 'false' END, 
 											  CASE WHEN withbbox::boolean = TRUE THEN 'true' ELSE 'false' END,
