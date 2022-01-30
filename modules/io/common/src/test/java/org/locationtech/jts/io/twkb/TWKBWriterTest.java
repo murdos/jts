@@ -28,8 +28,6 @@ import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKBReader;
-import org.locationtech.jts.io.twkb.TWKBHeader;
-import org.locationtech.jts.io.twkb.TWKBWriter;
 import org.locationtech.jts.io.twkb.TWKBTestSupport.TWKBTestData;
 
 public class TWKBWriterTest {
@@ -211,13 +209,13 @@ public class TWKBWriterTest {
         testEncode(testSupport.getMultiLineStrings());
     }
 
-    public @Test void testPolyongs() {
+    public @Test void testPolygons() {
         // disable optimization, test data created with postgis doesn't have it
         writer.setOptimizedEncoding(false);
         testEncode(testSupport.getPolygons());
     }
 
-    public @Test void testMultiPolyongs() {
+    public @Test void testMultiPolygons() {
         // disable optimization, test data created with postgis doesn't have it
         writer.setOptimizedEncoding(false);
         testEncode(testSupport.getMultiPolygons());
