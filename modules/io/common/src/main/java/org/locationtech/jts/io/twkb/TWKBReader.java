@@ -32,6 +32,13 @@ import org.locationtech.jts.geom.impl.PackedCoordinateSequenceFactory;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.twkb.TWKBHeader.GeometryType;
 
+/**
+ * Reads a {@link Geometry} encoded into TWKB (Tiny Well-known Binary).
+ * <p>
+ * The current TWKB specification is
+ * <a href='https://github.com/TWKB/Specification/blob/master/twkb.md'>https://github.com/TWKB/Specification/blob/master/twkb.md</a>.
+ * <p>
+ */
 public class TWKBReader {
 
     private static final GeometryFactory DEFAULT_FACTORY = new GeometryFactory(
@@ -78,17 +85,10 @@ public class TWKBReader {
 
     private static TWKBHeader readHeader(DataInput in) throws IOException {
         Objects.requireNonNull(in);
-        // first 1-byte header //
         final int typeAndPrecisionHeader = in.readByte() & 0xFF;
         final int geometryTypeCode = typeAndPrecisionHeader & 0b00001111;
         final GeometryType geometryType = GeometryType.valueOf(geometryTypeCode);
         final int precision = Varint.zigzagDecode((typeAndPrecisionHeader & 0b11110000) >> 4);
-        // metadata_header := byte
-        // bbox_flag := 0b00000001
-        // size_flag := 0b00000010
-        // idlist_flag := 0b00000100
-        // extended_precision_flag := 0b00001000
-        // empty_geometry_flag := 0b00010000
         final int metadata_header = in.readByte() & 0xFF;
         final boolean hasBBOX = (metadata_header & 0b00000001) > 0;
         final boolean hasSize = (metadata_header & 0b00000010) > 0;
@@ -96,12 +96,6 @@ public class TWKBReader {
         final boolean hasExtendedPrecision = (metadata_header & 0b00001000) > 0;
         final boolean isEmpty = (metadata_header & 0b00010000) > 0;
 
-        // extended_dimensions_header present iif extended_precision_flag == 1
-        // extended_dimensions_header := byte
-        // Z_dimension_presence_flag := 0b00000001
-        // M_dimension_presence_flag := 0b00000010
-        // Z_precision := 0b000XXX00 3-bit unsigned integer using bits 3-5
-        // M_precision := 0bXXX00000 3-bit unsigned integer using bits 6-8
         boolean hasZ = false;
         boolean hasM = false;
         int zprecision = 0;
@@ -114,8 +108,6 @@ public class TWKBReader {
             mprecision = (extendedDimsHeader & 0b11100000) >> 5;
         }
 
-        // # geometry_body_size present iif size_flag == 1
-        // geometry_body_size := uint32 # size in bytes of <geometry_body>
         int geometryBodySize = -1;
         if (hasSize) {
             geometryBodySize = Varint.readUnsignedVarInt(in);
