@@ -238,15 +238,6 @@ public class TWKBWriterTest {
             log("expected: %s", expected);
             log("encoded : %s", actual);
             log("decoded encoded : %s", reader.read(written));
-            try {
-                TWKBHeader resultHeader = writer.writeInternal(geom,
-                        (DataOutput) new DataOutputStream(new ByteArrayOutputStream()));
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                TWKBWriter.writeHeaderTo(resultHeader, new DataOutputStream(out));
-                log("header  : %s", testSupport.toHexString(out.toByteArray()));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
             log("----------");
             log("\\set g '%s'", inputWKT);
             log("SELECT :'g' AS input, %d AS xy, %d AS z, %d AS m, %s AS size, %s AS bbox,",

@@ -11,8 +11,6 @@
  */
 package org.locationtech.jts.io.twkb;
 
-import static org.locationtech.jts.io.twkb.TWKBHeader.GeometryType.POINT;
-
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
@@ -186,18 +184,8 @@ public class TWKBWriter {
     }
 
     public void write(Geometry geom, DataOutput out) throws IOException {
-        writeInternal(geom, out);
-    }
-
-    final /* @VisibleForTesting */ TWKBHeader writeInternal(Geometry geom, DataOutput out)
-            throws IOException {
         Objects.requireNonNull(geom, "geometry is null");
-        return write(geom, TWKBOutputStream.of(out), paramsHeader);
-    }
-
-    private TWKBHeader write(Geometry geometry, TWKBOutputStream out, TWKBHeader params)
-        throws IOException {
-        return write(geometry, out, params, false);
+        write(geom, TWKBOutputStream.of(out), paramsHeader, false);
     }
 
     private TWKBHeader write(Geometry geometry, TWKBOutputStream out, TWKBHeader params,
@@ -220,10 +208,6 @@ public class TWKBWriter {
             writeGeometryBody(geometry, out, header);
         }
         return header;
-    }
-
-    static void writeHeaderTo(TWKBHeader header, DataOutput out) throws IOException {
-        writeHeaderTo(header, TWKBOutputStream.of(out));
     }
 
     private static void writeHeaderTo(TWKBHeader header, TWKBOutputStream out) throws IOException {
