@@ -14,7 +14,6 @@ package org.locationtech.jts.io.twkb;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutput;
@@ -177,13 +176,19 @@ public class TWKBWriterTest {
         testEncode(testSupport.getPoints());
     }
 
-    public @Test void testPointsBboxOptimization() throws ParseException {
+    public @Test void testPointsOptimized() throws ParseException {
         writer.setOptimizedEncoding(true);
-        for (TWKBTestData testData : testSupport.getPoints()) {
-            assumeFalse(testData.isIncludeBbox());
-            String expectedTWKB = testSupport.toHexString(testData.getExpectedTWKB());
-            check(testData.getInputWKT(), testData.getXyprecision(), testData.getZprecision(), testData.getMprecision(), testData.isIncludeSize(), true, expectedTWKB);
-        }
+        check("POINTZ(1 2 3)", 0, 0, 0, false, true, "010801020406");
+
+        writer.setOptimizedEncoding(false);
+        check("POINTZ(1 2 3)", 0, 0, 0, false, true, "010901020004000600020406");
+
+        writer.setOptimizedEncoding(false);
+        check("POINT(1 2)", 0, 0, 0, false, true, "0101020004000204");
+
+        writer.setOptimizedEncoding(true);
+        check("POINT(1 2)", 0, 0, 0, false, true, "01000204");
+
     }
 
     public @Test void testMultiPoints() {

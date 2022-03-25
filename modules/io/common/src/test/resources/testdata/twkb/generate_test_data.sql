@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION generate_twkb_test_data(arr text[], bbox_values bool[] default ARRAY[true, false])
+CREATE OR REPLACE FUNCTION generate_twkb_test_data(arr text[])
 RETURNS TABLE (input_wkt TEXT, xyprecision INT, zprecision INT, mprecision INT, withsize TEXT, withbbox TEXT, expected_wkt TEXT, expected_twkb TEXT)
 AS $$
 DECLARE
@@ -31,8 +31,8 @@ BEGIN
 	   	FOR z IN 0..7 LOOP
 		   	FOR m IN 0..7 LOOP
 		   	     --FOR withsize IN 0..1 LOOP
-                    FOREACH withbbox IN ARRAY bbox_values LOOP
-						expected_twkb = encode(ST_AsTWKB(inputwkt::geometry, xy, z, m, withsize::boolean, withbbox), 'hex');
+			   	 	FOR withbbox IN 0..1 LOOP
+						expected_twkb = encode(ST_AsTWKB(inputwkt::geometry, xy, z, m, withsize::boolean, withbbox::boolean), 'hex');
 						expected_wkt = ST_AsText(ST_GeomFromTWKB(decode(expected_twkb, 'hex')));
 						INSERT INTO td VALUES(inputwkt, xy, z, m,
 											  CASE WHEN withsize::boolean = TRUE THEN 'true' ELSE 'false' END,
@@ -58,7 +58,7 @@ COPY (SELECT * FROM generate_twkb_test_data(ARRAY[
 			'POINT Z(12345678.12345678 -12345678.12345678 0.12345678)',
 			'POINT M(12345678.12345678 -12345678.12345678 9.87654321)',
 			'POINT ZM(12345678.12345678 -12345678.12345678 0.12345678 9.87654321)'
-		], ARRAY[false])
+		])
  ORDER BY input_wkt, xyprecision, zprecision, mprecision, withsize, withbbox
  ) TO '/tmp/points.csv' WITH (FORMAT CSV, HEADER, DELIMITER '|');
 
