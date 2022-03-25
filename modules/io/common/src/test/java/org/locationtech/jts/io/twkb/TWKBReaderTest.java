@@ -69,11 +69,6 @@ public class TWKBReaderTest {
                 "0108ff000090c6b9d990923890c6b9d9909238");
     }
 
-    @Ignore
-    public @Test void testOptimizations() {
-        fail("Implement me");
-    }
-
     public @Test void testProvidedGeometryFactory() throws ParseException {
         this.geomFactory = new GeometryFactory();
         testReadAll(testSupport.getPoints());

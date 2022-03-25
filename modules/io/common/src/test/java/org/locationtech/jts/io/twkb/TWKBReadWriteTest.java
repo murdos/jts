@@ -17,15 +17,11 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
-import org.locationtech.jts.io.twkb.TWKBReader;
-import org.locationtech.jts.io.twkb.TWKBWriter;
 import org.locationtech.jts.io.twkb.TWKBTestSupport.TWKBTestData;
 
 public class TWKBReadWriteTest {
@@ -115,20 +111,13 @@ public class TWKBReadWriteTest {
     private void testWriteRead(List<TWKBTestData> pointsTestData) throws ParseException {
         for (TWKBTestData record : pointsTestData) {
             TWKBTestData withSize = new TWKBTestData(record).setIncludeSize(true);
-            boolean optimizedEncoding = true;
-            boolean postgisCompatibleEncoding = false;
-
-            check(record, postgisCompatibleEncoding);
-            check(withSize, postgisCompatibleEncoding);
-
-            check(record, optimizedEncoding);
-            check(withSize, optimizedEncoding);
+            check(record);
+            check(withSize);
         }
     }
 
-    private void check(TWKBTestData record, boolean optimizedEncoding) throws ParseException {
+    private void check(TWKBTestData record) throws ParseException {
 
-        writer.setOptimizedEncoding(optimizedEncoding);
         writer.setXYPrecision(record.getXyprecision());
         writer.setIncludeBbox(record.isIncludeBbox());
         writer.setIncludeSize(record.isIncludeSize());
@@ -143,9 +132,9 @@ public class TWKBReadWriteTest {
         double coordComparisonTolerance = 1e-8;
         boolean equals = expectedGeometry.equalsExact(parsed, coordComparisonTolerance);
         if (!equals) {
-            log("optimizedEncoding: %s, precision[xy: %d, z: %d, m: %d], include size: %s, include bbox: %s",
-                    optimizedEncoding, record.getXyprecision(), record.getZprecision(),
-                    record.getMprecision(), record.isIncludeSize(), record.isIncludeBbox());
+            log("precision[xy: %d, z: %d, m: %d], include size: %s, include bbox: %s",
+                    record.getXyprecision(), record.getZprecision(), record.getMprecision(),
+                    record.isIncludeSize(), record.isIncludeBbox());
             log("input   : %s", record.getInputGeometry());
             log("expected: %s", record.getExpectedTWKBHex());
             log("encoded : %s", testSupport.toHexString(encoded));

@@ -13,7 +13,6 @@
 package org.locationtech.jts.io.twkb;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutput;
@@ -35,6 +34,7 @@ public class TWKBWriterTest {
     public @Rule TWKBTestSupport testSupport = new TWKBTestSupport();
 
     private TWKBWriter writer = new TWKBWriter();
+    private TWKBReader reader = new TWKBReader();
 
     public @Test void testEmptyGeometries() throws ParseException {
         check("POINT EMPTY", -1, 0, 0, false, false, "1110");
@@ -165,65 +165,31 @@ public class TWKBWriterTest {
         check("GEOMETRYCOLLECTION EMPTY", 0, 0, 0, true, withBbox, "071200");
     }
 
-    @Ignore
-    public @Test void testOptimizations() {
-        fail("Implement me");
-    }
-
     public @Test void testPoints() {
-        // disable optimization, test data created with postgis doesn't have it
-        writer.setOptimizedEncoding(false);
         testEncode(testSupport.getPoints());
     }
 
-    public @Test void testPointsOptimized() throws ParseException {
-        writer.setOptimizedEncoding(true);
-        check("POINTZ(1 2 3)", 0, 0, 0, false, true, "010801020406");
-
-        writer.setOptimizedEncoding(false);
-        check("POINTZ(1 2 3)", 0, 0, 0, false, true, "010901020004000600020406");
-
-        writer.setOptimizedEncoding(false);
-        check("POINT(1 2)", 0, 0, 0, false, true, "0101020004000204");
-
-        writer.setOptimizedEncoding(true);
-        check("POINT(1 2)", 0, 0, 0, false, true, "01000204");
-
-    }
-
     public @Test void testMultiPoints() {
-        // disable optimization, test data created with postgis doesn't have it
-        writer.setOptimizedEncoding(false);
         testEncode(testSupport.getMultiPoints());
     }
 
     public @Test void testLineStrings() {
-        // disable optimization, test data created with postgis doesn't have it
-        writer.setOptimizedEncoding(true);
         testEncode(testSupport.getLineStrings());
     }
 
     public @Test void testMultiLineStrings() {
-        // disable optimization, test data created with postgis doesn't have it
-        writer.setOptimizedEncoding(true);
         testEncode(testSupport.getMultiLineStrings());
     }
 
     public @Test void testPolygons() {
-        // disable optimization, test data created with postgis doesn't have it
-        writer.setOptimizedEncoding(false);
         testEncode(testSupport.getPolygons());
     }
 
     public @Test void testMultiPolygons() {
-        // disable optimization, test data created with postgis doesn't have it
-        writer.setOptimizedEncoding(false);
         testEncode(testSupport.getMultiPolygons());
     }
 
     public @Test void testGeometryCollections() {
-        // disable optimization, test data created with postgis doesn't have it
-        writer.setOptimizedEncoding(false);
         testEncode(testSupport.getGeometryCollections());
     }
 
@@ -271,6 +237,7 @@ public class TWKBWriterTest {
             log("input   : %s", inputWKT);
             log("expected: %s", expected);
             log("encoded : %s", actual);
+            log("decoded encoded : %s", reader.read(written));
             try {
                 TWKBHeader resultHeader = writer.writeInternal(geom,
                         (DataOutput) new DataOutputStream(new ByteArrayOutputStream()));
