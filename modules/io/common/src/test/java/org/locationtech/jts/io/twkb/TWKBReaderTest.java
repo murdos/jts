@@ -40,14 +40,9 @@ public class TWKBReaderTest {
 
     public @Rule TWKBTestSupport testSupport = new TWKBTestSupport();
 
-    private GeometryFactory geomFactory;
+    private GeometryFactory geomFactory = new GeometryFactory();
 
-    private TWKBReader reader;
-
-    public @Before void before() {
-        reader = new TWKBReader();
-        geomFactory = new GeometryFactory();
-    }
+    private TWKBReader reader = new TWKBReader();
 
     public @Test void testZMPrecision() throws ParseException {
 

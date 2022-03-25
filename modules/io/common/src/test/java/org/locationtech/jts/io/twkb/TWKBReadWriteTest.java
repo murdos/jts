@@ -32,18 +32,9 @@ public class TWKBReadWriteTest {
 
     public @Rule TWKBTestSupport testSupport = new TWKBTestSupport();
 
-    private TWKBWriter writer;
+    private TWKBWriter writer = new TWKBWriter();
 
-    private TWKBReader reader;
-
-    // a test case shall initialize if it want to the reader to use it, othewise reader used its
-    // default factory
-    private GeometryFactory readerFactory;
-
-    public @Before void before() {
-        writer = new TWKBWriter();
-        reader = new TWKBReader();
-    }
+    private TWKBReader reader = new TWKBReader();
 
     public @Test void testXYPrecision() throws ParseException {
         final String encodeWKT = "POINT (12345678.12345678 0)";
@@ -184,9 +175,7 @@ public class TWKBReadWriteTest {
     }
 
     private Geometry geom(String wkt) throws ParseException {
-        WKTReader wktreader = this.readerFactory == null ? new WKTReader()
-                : new WKTReader(readerFactory);
-
+        WKTReader wktreader = new WKTReader();
         wktreader.setIsOldJtsCoordinateSyntaxAllowed(false);
         return wktreader.read(wkt);
     }
