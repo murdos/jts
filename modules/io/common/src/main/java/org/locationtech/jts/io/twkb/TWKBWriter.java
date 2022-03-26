@@ -257,12 +257,14 @@ public class TWKBWriter {
 
         final int dimensions = header.getDimensions();
         long[] delta = new long[dimensions];
-        int npoints = coordinateSequence.size();
+        int nPoints = 0;
+        int nPointsRemaining = coordinateSequence.size();
         // Real number of points can't be determined beforehand, since duplicated points may be removed, so buffering is required
         BufferedTKWBOutputStream bufferedOut = BufferedTKWBOutputStream.create();
 
         for (int coordIndex = 0; coordIndex < coordinateSequence.size(); coordIndex++) {
             long diff = 0;
+            nPointsRemaining--;
             for (int ordinateIndex = 0; ordinateIndex < dimensions; ordinateIndex++) {
                 int precision = header.getPrecision(ordinateIndex);
                 double ordinate = coordinateSequence.getOrdinate(coordIndex, ordinateIndex);
@@ -271,18 +273,18 @@ public class TWKBWriter {
                 prev[ordinateIndex] = preciseOrdinate;
                 diff += Math.abs(delta[ordinateIndex]);
             }
-            if (diff == 0 && coordIndex > minNPoints) {
+            if (coordIndex != 0 && diff == 0 && (nPoints + nPointsRemaining) > minNPoints) {
                 // Skip this point
-                npoints--;
                 continue;
             }
 
             for (int ordinateIndex = 0; ordinateIndex < header.getDimensions(); ordinateIndex++) {
                 bufferedOut.writeSignedVarLong(delta[ordinateIndex]);
             }
+            nPoints++;
         }
 
-        out.writeUnsignedVarInt(npoints);
+        out.writeUnsignedVarInt(nPoints);
         bufferedOut.writeTo(out);
     }
 
