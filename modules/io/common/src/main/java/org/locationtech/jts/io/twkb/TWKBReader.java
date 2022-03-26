@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 James Hughes, 2019 Gabriel Roldan
+ * Copyright (c) 2018 James Hughes, 2019 Gabriel Roldan, 2022 Aurélien Mino
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
